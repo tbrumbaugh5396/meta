@@ -1,0 +1,70 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  META_ENV: $[coalesce(variables['META_ENV'], variables['Build.SourceBranchName'] == 'main' ? 'prod' : 'staging')]
+
+stages:
+  - stage: Validate
+    displayName: 'Validate System'
+    jobs:
+      - job: Validate
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.9'
+          - script: |
+              pip install -r requirements.txt
+              pip install -e .
+            displayName: 'Install dependencies'
+          - script: |
+              meta validate --env $(META_ENV)
+            displayName: 'Validate'
+
+  - stage: Apply
+    displayName: 'Apply Components'
+    dependsOn: Validate
+    jobs:
+      - job: Apply
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.9'
+          - script: |
+              pip install -r requirements.txt
+              pip install -e .
+            displayName: 'Install dependencies'
+          - script: |
+              meta lock --env $(META_ENV)
+            displayName: 'Generate lock file'
+          - script: |
+              meta apply --env $(META_ENV) --locked --parallel --jobs 4
+            displayName: 'Apply components'
+          - script: |
+              meta health --all --env $(META_ENV)
+            displayName: 'Health check'
+
+  - stage: Test
+    displayName: 'Run Tests'
+    dependsOn: Apply
+    jobs:
+      - job: Test
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.9'
+          - script: |
+              pip install -r requirements.txt
+              pip install -e .
+            displayName: 'Install dependencies'
+          - script: |
+              meta test --env $(META_ENV)
+            displayName: 'Run tests'
+
+

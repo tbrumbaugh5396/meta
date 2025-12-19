@@ -1,0 +1,80 @@
+version: 2.1
+
+jobs:
+  validate:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            pip install -r requirements.txt
+            pip install -e .
+      - run:
+          name: Validate
+          command: |
+            META_ENV=${CIRCLE_BRANCH == "main" ? "prod" : "staging"}
+            meta validate --env $META_ENV
+
+  apply:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            pip install -r requirements.txt
+            pip install -e .
+      - run:
+          name: Configure AWS (if using S3)
+          command: |
+            if [ -n "$AWS_ACCESS_KEY_ID" ]; then
+              pip install boto3
+            fi
+      - run:
+          name: Generate lock file
+          command: |
+            META_ENV=${CIRCLE_BRANCH == "main" ? "prod" : "staging"}
+            meta lock --env $META_ENV
+      - run:
+          name: Apply components
+          command: |
+            META_ENV=${CIRCLE_BRANCH == "main" ? "prod" : "staging"}
+            meta apply --env $META_ENV --locked --parallel --jobs 4
+      - run:
+          name: Health check
+          command: |
+            META_ENV=${CIRCLE_BRANCH == "main" ? "prod" : "staging"}
+            meta health --all --env $META_ENV
+
+  test:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            pip install -r requirements.txt
+            pip install -e .
+      - run:
+          name: Run tests
+          command: |
+            META_ENV=${CIRCLE_BRANCH == "main" ? "prod" : "staging"}
+            meta test --env $META_ENV
+
+workflows:
+  version: 2
+  validate-and-apply:
+    jobs:
+      - validate
+      - apply:
+          requires:
+            - validate
+      - test:
+          requires:
+            - apply
+
+

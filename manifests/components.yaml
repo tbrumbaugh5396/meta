@@ -1,0 +1,30 @@
+components:
+  agent-core:
+    repo: "git@github.com:yourorg/agent-core.git"
+    version: "v2.1.0"
+    type: "bazel"
+    build_target: "//agent_core:all"
+    description: "Agent intelligence and decision-making capabilities"
+  
+  detector-core:
+    repo: "git@github.com:yourorg/detector-core.git"
+    version: "v1.5.2"
+    type: "bazel"
+    build_target: "//detector_core:all"
+    description: "Bot detection and fingerprinting capabilities"
+  
+  scraper-capabilities:
+    repo: "git@github.com:yourorg/scraper-capabilities.git"
+    version: "v3.0.1"
+    type: "bazel"
+    build_target: "//scraper_capabilities:all"
+    description: "Web scraping and data extraction capabilities"
+  
+  infrastructure-components:
+    repo: "git@github.com:yourorg/infrastructure-components.git"
+    version: "v4.2.0"
+    type: "bazel"
+    build_target: "//infrastructure:all"
+    description: "Infrastructure primitives (proxy, VPN, network, storage)"
+
+

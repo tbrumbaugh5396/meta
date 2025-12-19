@@ -1,0 +1,18 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+py_library(
+    name = "meta",
+    srcs = glob(["meta/**/*.py"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        # Dependencies will be added as components are integrated
+    ],
+)
+
+py_binary(
+    name = "cli",
+    srcs = ["meta/cli.py"],
+    deps = [":meta"],
+)
+
+

@@ -1,0 +1,37 @@
+features:
+  sports-betting-ingestion:
+    description: "Ingest sports betting data from multiple sources"
+    components:
+      - scraper-capabilities
+      - agent-core
+      - infrastructure-components
+    contracts:
+      - "scraper-capabilities.output -> agent-core.input"
+      - "agent-core.output -> infrastructure-components.storage"
+    policies:
+      - type: "rate-limit"
+        max_requests_per_minute: 30
+      - type: "compliance"
+        respect_robots: true
+  
+  competitive-intelligence:
+    description: "Competitive intelligence reporting pipeline"
+    components:
+      - scraper-capabilities
+      - detector-core
+      - infrastructure-components
+    depends_on:
+      - sports-betting-ingestion
+    contracts:
+      - "scraper-capabilities must handle multiple sources"
+      - "detector-core must validate bot detection"
+  
+  real-time-monitoring:
+    description: "Real-time monitoring and alerting"
+    components:
+      - agent-core
+      - infrastructure-components
+    contracts:
+      - "agent-core must provide observability metrics"
+
+

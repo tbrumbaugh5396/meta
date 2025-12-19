@@ -1,0 +1,81 @@
+name: Meta-Repo Apply
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to apply'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+      
+      - name: Validate system
+        run: meta validate --env ${{ github.event.inputs.environment || 'dev' }}
+  
+  apply:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+      
+      - name: Configure AWS credentials (if using S3)
+        if: env.USE_S3 == 'true'
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Generate lock file
+        run: meta lock --env ${{ github.event.inputs.environment || 'dev' }}
+      
+      - name: Apply components
+        run: |
+          meta apply \
+            --env ${{ github.event.inputs.environment || 'dev' }} \
+            --locked \
+            --parallel \
+            --jobs 4 \
+            --progress
+      
+      - name: Run health checks
+        run: meta health --all --env ${{ github.event.inputs.environment || 'dev' }}
+      
+      - name: Run tests
+        run: meta test --env ${{ github.event.inputs.environment || 'dev' }}
+
+

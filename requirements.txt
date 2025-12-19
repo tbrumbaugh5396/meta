@@ -1,0 +1,10 @@
+typer>=0.9.0
+PyYAML>=6.0
+rich>=13.0.0
+pytest>=7.0.0
+pytest-mock>=3.10.0
+boto3>=1.26.0  # For S3 remote cache (optional)
+google-cloud-storage>=2.10.0  # For GCS remote cache (optional)
+requests>=2.28.0  # For registry API calls
+hvac>=1.0.0  # For Vault secrets (optional)
+

@@ -1,0 +1,68 @@
+stages:
+  - validate
+  - apply
+  - test
+  - health
+
+variables:
+  META_ENV: ${CI_COMMIT_REF_NAME == "main" ? "prod" : "staging"}
+  META_MANIFESTS_DIR: "manifests"
+
+validate:
+  stage: validate
+  image: python:3.9
+  before_script:
+    - pip install -r requirements.txt
+    - pip install -e .
+  script:
+    - meta validate --env $META_ENV
+  only:
+    - main
+    - develop
+    - merge_requests
+
+apply:
+  stage: apply
+  image: python:3.9
+  before_script:
+    - pip install -r requirements.txt
+    - pip install -e .
+    - |
+      if [ -n "$AWS_ACCESS_KEY_ID" ]; then
+        pip install boto3
+        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+        export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      fi
+  script:
+    - meta lock --env $META_ENV
+    - meta apply --env $META_ENV --locked --parallel --jobs 4
+  only:
+    - main
+    - develop
+
+test:
+  stage: test
+  image: python:3.9
+  before_script:
+    - pip install -r requirements.txt
+    - pip install -e .
+  script:
+    - meta test --env $META_ENV
+  only:
+    - main
+    - develop
+
+health:
+  stage: health
+  image: python:3.9
+  before_script:
+    - pip install -r requirements.txt
+    - pip install -e .
+  script:
+    - meta health --all --env $META_ENV --build --tests
+  only:
+    - main
+    - develop
+
+
