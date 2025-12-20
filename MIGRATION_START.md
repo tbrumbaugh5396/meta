@@ -8,7 +8,7 @@
 - ✅ `INTERFACE_CONTRACTS.md` - Interface contract definitions
 
 ### 2. Component Template
-- ✅ `component-template/` - Complete template for new component repositories
+- ✅ `meta-component-template/` - Complete template for new component repositories
   - Bazel build configuration
   - Python package setup
   - Contract interface structure
@@ -104,7 +104,7 @@ All Phase 0 preparation tasks are complete:
 ├── platform-meta/                # Level 0: Platform foundation
 ├── scraping-platform-meta/      # Level 1: Scraping system
 ├── gambling-platform-meta/       # Level 2: Application
-└── component-template/           # Template for new components
+└── meta-component-template/           # Template for new components
 ```
 
 ## How to Proceed
@@ -112,7 +112,7 @@ All Phase 0 preparation tasks are complete:
 1. **Review the migration plan**: Read `MIGRATION_PLAN.md` for detailed steps
 2. **Check status**: Use `MIGRATION_STATUS.md` to track progress
 3. **Start extraction**: Begin with Phase 1, starting with `infrastructure-primitives`
-4. **Use template**: Copy `component-template/` when creating new component repos
+4. **Use template**: Copy `meta-component-template/` when creating new component repos
 
 ## Notes
 

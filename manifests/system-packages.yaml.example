@@ -1,0 +1,29 @@
+# System Packages Manifest
+# Copy this file to system-packages.yaml and customize for your meta-repo
+
+system_packages:
+  # Python version requirement
+  python:
+    version: "3.11"  # Required Python version
+  
+  # System tools (installed via apt, brew, yum, etc.)
+  system_tools:
+    - git
+    - docker
+    - bazel
+    # Add more system packages as needed
+  
+  # Global Python packages (installed system-wide or in meta-repo venv)
+  global_packages:
+    pip:
+      # Format: package==version or just package
+      - name: black
+        version: "23.0.0"
+      - name: pytest
+        version: "7.4.0"
+      - name: mypy
+        version: "1.5.0"
+      # Or simple format:
+      # - "requests==2.31.0"
+      # - "typer==0.9.0"
+

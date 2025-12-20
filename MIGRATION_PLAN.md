@@ -309,7 +309,7 @@ gambling-platform-meta/
 - [ ] Set up contract testing framework
 
 #### 0.3 Create Component Repository Templates
-- [ ] Create `component-template/` with:
+- [ ] Create `meta-component-template/` with:
   - `BUILD.bazel`
   - `setup.py`
   - `contracts/` directory

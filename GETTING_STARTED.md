@@ -99,7 +99,7 @@ cat manifests/components.yaml
 
 ### Create a New Component
 
-1. Copy `component-template/` directory
+1. Copy `meta-component-template/` directory
 2. Rename to your component name
 3. Update `setup.py` with component details
 4. Add code to `src/`

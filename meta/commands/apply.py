@@ -23,7 +23,7 @@ app = typer.Typer(help="Apply changes to meta-repo")
 
 def apply_component(name: str, comp: dict, env: str, manifests_dir: str = "manifests", 
                     use_lock: bool = False, lock_file: str = "manifests/components.lock.yaml",
-                    skip_packages: bool = False) -> bool:
+                    skip_packages: bool = False, isolate: bool = False) -> bool:
     """Apply changes for a single component."""
     log(f"Applying changes for component: {name}")
     
@@ -67,8 +67,16 @@ def apply_component(name: str, comp: dict, env: str, manifests_dir: str = "manif
             error(f"Failed to checkout version {version} for {name}")
             return False
     
-    # Install package manager dependencies
-    if not install_component_dependencies(comp_dir, skip_packages):
+    # Set up isolation if requested
+    venv_path = None
+    if isolate:
+        from meta.utils.isolation import setup_component_isolation
+        isolation_config = comp.get("isolation", {})
+        if isolation_config:
+            venv_path = setup_component_isolation(name, comp_path, isolation_config)
+    
+    # Install package manager dependencies (in venv if isolated)
+    if not install_component_dependencies(comp_dir, skip_packages, venv_path=venv_path):
         error(f"Failed to install dependencies for {name}")
         return False
     
@@ -99,6 +107,7 @@ def apply(
     locked: bool = typer.Option(False, "--locked", help="Use lock file for exact commit SHAs"),
     lock_file: str = typer.Option("manifests/components.lock.yaml", "--lock-file", "-l", help="Lock file path"),
     skip_packages: bool = typer.Option(False, "--skip-packages", help="Skip package manager dependency installation"),
+    isolate: bool = typer.Option(False, "--isolate", help="Use virtual environments for component isolation"),
     parallel: bool = typer.Option(None, "--parallel/--no-parallel", "-p", help="Apply components in parallel"),
     jobs: Optional[int] = typer.Option(None, "--jobs", "-j", help="Number of parallel jobs"),
     progress: Optional[bool] = typer.Option(None, "--progress/--no-progress", help="Show progress bar"),
@@ -222,7 +231,7 @@ def apply(
             def apply_with_name(comp_name: str) -> Tuple[str, bool]:
                 comp = components[comp_name]
                 success = apply_component(comp_name, comp, env, manifests_dir, use_lock=locked,
-                                        lock_file=lock_file, skip_packages=skip_packages)
+                                        lock_file=lock_file, skip_packages=skip_packages, isolate=isolate)
                 return (comp_name, success)
             
             if progress:
@@ -244,7 +253,7 @@ def apply(
             for comp_name in ordered_to_apply:
                 comp = components[comp_name]
                 if not apply_component(comp_name, comp, env, manifests_dir, use_lock=locked, 
-                                     lock_file=lock_file, skip_packages=skip_packages):
+                                     lock_file=lock_file, skip_packages=skip_packages, isolate=isolate):
                     all_success = False
                 
                 if progress_bar:
