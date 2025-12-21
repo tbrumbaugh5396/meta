@@ -1,8 +1,26 @@
-# Meta-Repo Migration Project
+# Meta-Repo CLI Tool
+
+A powerful command-line tool for managing hierarchical meta-repository architectures. The `meta` CLI provides comprehensive capabilities for orchestrating multi-repository projects, managing dependencies, visualizing relationships, and automating common development workflows.
 
 ## 🎉 Migration Complete!
 
 This project has been successfully migrated to a hierarchical meta-repo architecture.
+
+## Quick Start
+
+```bash
+# Install the meta CLI
+pip install -e .
+
+# Check system status
+meta status
+
+# Validate configuration
+meta validate --env dev
+
+# Apply changes
+meta apply --env dev
+```
 
 ## Quick Links
 
@@ -34,6 +52,472 @@ meta-repo/
 └── VERIFICATION_CHECKLIST.md  # Verification checklist
 ```
 
+## Complete Command Reference
+
+### Core Commands
+
+#### `meta status`
+Show current system status for all components.
+
+```bash
+meta status [--env ENV]
+```
+
+Displays:
+- Component status (✓ checked out, ○ not checked out, ⚠ version mismatch)
+- Desired vs current versions
+- Component types
+
+#### `meta validate`
+Validate meta-repo configuration and manifests.
+
+```bash
+meta validate [--env ENV]
+```
+
+#### `meta plan`
+Generate an execution plan for applying changes.
+
+```bash
+meta plan [--env ENV] [--component COMPONENT]
+```
+
+#### `meta apply`
+Apply changes to components (install, build, test).
+
+```bash
+meta apply [--env ENV] [--component COMPONENT] [--all] [--isolate]
+```
+
+Options:
+- `--env ENV`: Environment to apply (default: dev)
+- `--component COMPONENT`: Apply to specific component
+- `--all`: Apply to all components
+- `--isolate`: Set up isolated environment (venv/docker)
+
+#### `meta test`
+Run tests for components.
+
+```bash
+meta test [--env ENV] [--component COMPONENT]
+```
+
+### Git Operations
+
+#### `meta git`
+Execute git commands across meta-repos and components.
+
+```bash
+# General git command
+meta git <git-command> [git-args...] [--component COMPONENT] [--all] [--meta-repo]
+
+# Convenience subcommands
+meta git status [--component COMPONENT] [--all] [--meta-repo]
+meta git add [files...] [--component COMPONENT] [--all] [--meta-repo]
+meta git commit -m "message" [--component COMPONENT] [--all] [--meta-repo]
+meta git push [--component COMPONENT] [--all] [--meta-repo]
+meta git pull [--component COMPONENT] [--all] [--meta-repo]
+meta git log [git-log-options...] [--component COMPONENT] [--all] [--meta-repo]
+meta git diff [git-diff-options...] [--component COMPONENT] [--all] [--meta-repo]
+meta git branch [git-branch-options...] [--component COMPONENT] [--all] [--meta-repo]
+meta git checkout [branch/tag] [--component COMPONENT] [--all] [--meta-repo]
+```
+
+Options:
+- `--component COMPONENT` / `-c`: Run on specific component
+- `--all` / `-a`: Run on all components
+- `--meta-repo`: Run on meta-repo root
+- `--parallel` / `-p`: Execute in parallel (not yet implemented)
+
+Examples:
+```bash
+# Check status of all components
+meta git status --all
+
+# Commit changes in a specific component
+meta git commit -m "Update feature" --component agent-core
+
+# Push all changes
+meta git push --all
+
+# View log for meta-repo
+meta git log --oneline -n 10 --meta-repo
+```
+
+### Repository Updates
+
+#### `meta update`
+Update all repositories with git operations (add, commit, push).
+
+```bash
+# Update all repositories
+meta update all [--message MESSAGE] [--push/--no-push] [--remote REMOTE] [--branch BRANCH]
+
+# Show status of all repositories
+meta update status
+```
+
+Options:
+- `--message MESSAGE` / `-m`: Commit message (default: "Update repositories")
+- `--push` / `--no-push`: Push to remote after commit (default: true)
+- `--remote REMOTE` / `-r`: Remote name (default: origin)
+- `--branch BRANCH` / `-b`: Branch name (default: main)
+- `--meta-repos-only`: Only update meta-repos
+- `--components-only`: Only update component repos
+
+Examples:
+```bash
+# Update all repos with custom message
+meta update all --message "Refactor components" --push
+
+# Update only meta-repos
+meta update all --meta-repos-only
+
+# Check status without committing
+meta update status
+```
+
+### Package Management
+
+#### `meta install`
+Install system packages and dependencies.
+
+```bash
+# Install system packages from manifest
+meta install system-packages [--manifest PATH]
+
+# Install Python packages globally
+meta install python <package1> [package2...] [--pip-path PATH]
+
+# Install system packages using package manager
+meta install system <package1> [package2...] [--manager MANAGER]
+```
+
+Examples:
+```bash
+# Install from system-packages.yaml
+meta install system-packages
+
+# Install Python packages
+meta install python requests==2.31.0 pytest==7.4.0
+
+# Install system tools
+meta install system git docker bazel --manager brew
+```
+
+### Dependency Graph Visualization
+
+#### `meta graph`
+Visualize dependency relationships between components and meta-repos.
+
+```bash
+# Show graph for a specific component
+meta graph component <component-name> [--format FORMAT] [--output FILE]
+
+# Show graph for all components
+meta graph all [--format FORMAT] [--output FILE]
+
+# Show meta-repo dependency graph
+meta graph meta-repo [--repo REPO] [--direction DIRECTION] [--format FORMAT] [--recursive] [--max-depth DEPTH]
+
+# Show complete connected graph (parents, children, siblings)
+meta graph full [--repo REPO] [--format FORMAT] [--max-depth DEPTH] [--unlimited] [--show-components] [--sort-repos SORT] [--export FORMAT]
+
+# Identify components that could be promoted to meta-repos
+meta graph promotion-candidates [--min-dependents N] [--min-component-dependents N] [--format FORMAT] [--output FILE]
+```
+
+**Graph Formats:**
+- `text`: Human-readable text output (default)
+- `dot`: Graphviz DOT format
+- `mermaid`: Mermaid diagram format
+
+**Graph Commands:**
+
+1. **`meta graph component`**: Show dependencies for a specific component
+   ```bash
+   meta graph component agent-core --format mermaid
+   ```
+
+2. **`meta graph all`**: Show dependency graph for all components
+   ```bash
+   meta graph all --format dot --output graph.dot
+   ```
+
+3. **`meta graph meta-repo`**: Show which meta-repos use this one and which this one uses
+   ```bash
+   # Show dependencies (down)
+   meta graph meta-repo --direction down --recursive
+   
+   # Show dependents (up)
+   meta graph meta-repo --direction up --recursive
+   
+   # Show both
+   meta graph meta-repo --direction both --recursive --max-depth 5
+   ```
+
+4. **`meta graph full`**: Complete connected graph with recursive expansion
+   ```bash
+   # Text output
+   meta graph full --repo gambling-platform-meta
+   
+   # Mermaid with components shown
+   meta graph full --show-components --format mermaid --sort-repos top
+   
+   # Export to PDF
+   meta graph full --format mermaid --export pdf --image-width 2400 --image-height 1800
+   
+   # Unlimited depth traversal
+   meta graph full --unlimited --show-components
+   ```
+
+   Options:
+   - `--show-components` / `-c`: Show components as first-class nodes
+   - `--sort-repos`: Sort repos by dependency count (`top`, `bottom`, `none`)
+   - `--repo-color`: Color for meta-repos (default: green)
+   - `--component-color`: Color for components (default: red)
+   - `--component-level`: Place components at same level (`top`, `bottom`)
+   - `--export`: Export Mermaid to image (`pdf`, `png`, `svg`)
+   - `--unlimited` / `-u`: Unlimited traversal depth
+
+5. **`meta graph promotion-candidates`**: Identify components that could become meta-repos
+   ```bash
+   # Default thresholds (2 meta-repo dependents OR 3 component dependents)
+   meta graph promotion-candidates
+   
+   # Custom thresholds
+   meta graph promotion-candidates --min-dependents 3 --min-component-dependents 5
+   
+   # Export to JSON
+   meta graph promotion-candidates --output candidates.json
+   ```
+
+   This command analyzes components and suggests which ones might benefit from being promoted to their own meta-repos based on:
+   - Number of meta-repos that depend on the component
+   - Number of components that depend on it
+   - Dependency complexity
+
+### Dependency Management
+
+#### `meta deps`
+Analyze and manage component dependencies.
+
+```bash
+meta deps [--component COMPONENT] [--format FORMAT]
+```
+
+#### `meta conflicts`
+Detect dependency conflicts.
+
+```bash
+meta conflicts [--component COMPONENT]
+```
+
+#### `meta lock`
+Generate or update lock files.
+
+```bash
+meta lock [--env ENV] [--component COMPONENT]
+```
+
+### Rollback & Recovery
+
+#### `meta rollback`
+Rollback to a previous state.
+
+```bash
+meta rollback [--env ENV] [--component COMPONENT] [--to VERSION]
+```
+
+### Health & Monitoring
+
+#### `meta health`
+Check health status of components.
+
+```bash
+meta health [--env ENV] [--component COMPONENT]
+```
+
+#### `meta metrics`
+View system metrics.
+
+```bash
+meta metrics [--component COMPONENT] [--format FORMAT]
+```
+
+### Configuration
+
+#### `meta config`
+Manage configuration settings.
+
+```bash
+meta config [get|set|list] [KEY] [VALUE]
+```
+
+### Scaffolding
+
+#### `meta scaffold`
+Generate component templates.
+
+```bash
+meta scaffold component <name> [--template TEMPLATE]
+```
+
+### Information & Discovery
+
+#### `meta info`
+Show information about components or meta-repo.
+
+```bash
+meta info [--component COMPONENT]
+```
+
+#### `meta discover`
+Discover components and dependencies.
+
+```bash
+meta discover [--path PATH]
+```
+
+#### `meta compare`
+Compare component versions or configurations.
+
+```bash
+meta compare [--component COMPONENT] [--env ENV]
+```
+
+#### `meta diff`
+Show differences between versions or environments.
+
+```bash
+meta diff [--component COMPONENT] [--env1 ENV1] [--env2 ENV2]
+```
+
+### Advanced Features
+
+#### `meta workspace`
+Manage workspace settings.
+
+```bash
+meta workspace [init|list|switch] [NAME]
+```
+
+#### `meta interactive`
+Launch interactive mode.
+
+```bash
+meta interactive
+```
+
+#### `meta publish`
+Publish components or releases.
+
+```bash
+meta publish [--component COMPONENT] [--version VERSION]
+```
+
+#### `meta migrate`
+Migrate components or configurations.
+
+```bash
+meta migrate [--from FROM] [--to TO]
+```
+
+#### `meta registry`
+Manage component registry.
+
+```bash
+meta registry [list|add|remove] [COMPONENT]
+```
+
+#### `meta dashboard`
+Launch web dashboard (if available).
+
+```bash
+meta dashboard [--port PORT]
+```
+
+### Security & Compliance
+
+#### `meta audit`
+Run security audits.
+
+```bash
+meta audit [--component COMPONENT]
+```
+
+#### `meta secrets`
+Manage secrets.
+
+```bash
+meta secrets [list|get|set|delete] [KEY]
+```
+
+#### `meta policies`
+Manage policies.
+
+```bash
+meta policies [list|apply|validate]
+```
+
+### Utilities
+
+#### `meta exec`
+Execute commands in component contexts.
+
+```bash
+meta exec <command> [--component COMPONENT] [--all]
+```
+
+#### `meta backup`
+Create backups.
+
+```bash
+meta backup [--component COMPONENT] [--output PATH]
+```
+
+#### `meta updates`
+Check for updates.
+
+```bash
+meta updates [--component COMPONENT]
+```
+
+#### `meta analytics`
+View analytics data.
+
+```bash
+meta analytics [--component COMPONENT] [--format FORMAT]
+```
+
+#### `meta plugins`
+Manage plugins.
+
+```bash
+meta plugins [list|install|remove] [PLUGIN]
+```
+
+#### `meta completion`
+Generate shell completion scripts.
+
+```bash
+meta completion [bash|zsh|fish]
+```
+
+#### `meta help`
+Show help for commands.
+
+```bash
+meta help [COMMAND]
+```
+
+#### `meta version`
+Show CLI version.
+
+```bash
+meta version
+```
+
 ## What Was Created
 
 - **19 Component Repositories** - All extracted and structured
@@ -43,8 +527,87 @@ meta-repo/
 - **Phase 1 Enhancements** - Lock files, dependency validation, package management
 - **Phase 2 Enhancements** - Multi-environment locks, security scanning, caching, content-addressed storage
 - **Phase 3 Enhancements** - Rollback command, remote cache/store (S3/GCS), progress indicators & parallel execution
-- **Phase 4 Enhancements** - Health checks, CI/CD integration examples, configuration management
+- **Phase 4 Enhancements** - Health checks, CI/CD integration, configuration management
 - **Comprehensive Documentation** - Complete guides and references
+
+## Key Features
+
+### 1. **Unified Git Operations**
+   - Execute git commands across all repositories
+   - Support for meta-repos and components
+   - Parallel execution (planned)
+
+### 2. **Dependency Graph Visualization**
+   - Multiple output formats (text, DOT, Mermaid)
+   - Recursive traversal with depth control
+   - Component promotion candidate analysis
+   - Export to PDF/PNG/SVG
+
+### 3. **Repository Management**
+   - Batch updates (add, commit, push)
+   - Status tracking across all repos
+   - Selective updates (meta-repos only, components only)
+
+### 4. **Package Management**
+   - System-wide package installation
+   - Python package management
+   - Declarative manifests
+
+### 5. **Isolation & Reproducibility**
+   - Virtual environment support
+   - Docker containerization
+   - Component-specific dependencies
+
+## Examples
+
+### Example 1: Check Status and Update All Repos
+
+```bash
+# Check current status
+meta status
+
+# Update all repositories
+meta update all --message "Update dependencies" --push
+```
+
+### Example 2: Visualize Dependencies
+
+```bash
+# Generate Mermaid diagram
+meta graph full --repo gambling-platform-meta --format mermaid --show-components
+
+# Export to PDF
+meta graph full --format mermaid --export pdf --image-width 2400
+
+# Find promotion candidates
+meta graph promotion-candidates --min-dependents 2
+```
+
+### Example 3: Git Operations Across Repos
+
+```bash
+# Check status of all components
+meta git status --all
+
+# Commit changes in specific component
+meta git commit -m "Add feature" --component agent-core
+
+# Push all changes
+meta git push --all
+```
+
+### Example 4: Install Dependencies
+
+```bash
+# Install from manifest
+meta install system-packages
+
+# Install Python packages
+meta install python requests pytest
+
+# Install system tools
+meta install system git docker --manager brew
+```
 
 ## Next Steps
 

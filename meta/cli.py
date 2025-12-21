@@ -19,7 +19,7 @@ try:
         rollback, health, config, scaffold, completion, info, updates, backup,
         metrics, audit, secrets, policies, workspace, interactive, help as help_cmd,
         discover, compare, diff, publish, graph, migrate, registry, dashboard,
-        plugins, analytics, git, install
+        plugins, analytics, git, install, update
     )
     # Phase 11-14 commands (optional, may not all be available)
     changelog = release = docs = cicd = security = None
@@ -55,7 +55,7 @@ except ImportError as e:
         rollback, health, config, scaffold, completion, info, updates, backup,
         metrics, audit, secrets, policies, workspace, interactive, help as help_cmd,
         discover, compare, diff, publish, graph, migrate, registry, dashboard,
-        plugins, analytics, git, install
+        plugins, analytics, git, install, update
     )
     changelog = release = docs = cicd = security = None
     test_templates = license_cmd = benchmark = api = di = cost = None
@@ -107,6 +107,7 @@ app.add_typer(test.app, name="test")
 app.add_typer(exec_cmd.app, name="exec")
 app.add_typer(git.app, name="git")
 app.add_typer(install.app, name="install")
+app.add_typer(update.app, name="update")
 app.add_typer(lock.app, name="lock")
 app.add_typer(deps.app, name="deps")
 app.add_typer(conflicts.app, name="conflicts")
@@ -208,19 +209,40 @@ def status(
     """Show current system status."""
     log(f"System status for environment: {env}")
     
-    from meta.utils.manifest import get_components, get_environment_config
+    from meta.utils.manifest import get_components, get_environment_config, find_meta_repo_root
     from meta.utils.git import get_current_version
+    from pathlib import Path
     
     components = get_components()
     env_config = get_environment_config(env)
     
     from meta.utils.logger import table
     
+    root = find_meta_repo_root()
+    parent = root.parent if root else Path.cwd().parent
+    
     rows = []
     for name, comp in components.items():
         desired_version = comp.get("version", "unknown")
-        current_version = get_current_version(f"components/{name}") or "not checked out"
-        status = "✓" if current_version == desired_version or current_version == "not checked out" else "⚠"
+        
+        # Try both components/ subdirectory and sibling directory
+        comp_path = root / "components" / name if root else Path(f"components/{name}")
+        sibling_path = parent / name
+        
+        current_version = None
+        if sibling_path.exists() and ((sibling_path / ".git").exists() or (sibling_path / ".git").is_file()):
+            current_version = get_current_version(str(sibling_path))
+        elif comp_path.exists() and ((comp_path / ".git").exists() or (comp_path / ".git").is_file()):
+            current_version = get_current_version(str(comp_path))
+        
+        current_version = current_version or "not checked out"
+        # Use different icons for different states
+        if current_version == "not checked out":
+            status = "○"  # Circle for not checked out
+        elif current_version == desired_version:
+            status = "✓"  # Checkmark for correct version
+        else:
+            status = "⚠"  # Warning for version mismatch
         
         rows.append([
             status,
