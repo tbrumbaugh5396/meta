@@ -1,9 +1,17 @@
 """Configuration management commands."""
 
 import typer
-from typing import Optional
+from typing import Optional, List
 from meta.utils.logger import log, success, error, table, panel
 from meta.utils.config import get_config
+from meta.utils.environment_manager import (
+    add_environment,
+    delete_environment,
+    reset_environments,
+    edit_environment,
+    list_environments,
+    show_environment,
+)
 
 app = typer.Typer(help="Manage configuration")
 
@@ -95,4 +103,108 @@ def unset(
         error("Failed to remove config value")
         raise typer.Exit(code=1)
 
+
+@app.command()
+def environment(
+    action: str = typer.Argument(..., help="Action: add, delete, reset, edit, list, show"),
+    env_name: Optional[str] = typer.Argument(None, help="Environment name"),
+    from_env: Optional[str] = typer.Option(None, "--from", help="Copy from existing environment (for add)"),
+    component: Optional[List[str]] = typer.Option(None, "--component", "-c", help="Component version pairs: 'component-name:version' (can be used multiple times)"),
+    set_all: Optional[str] = typer.Option(None, "--set-all", help="Set all components to this version (for edit)"),
+    manifests_dir: str = typer.Option("manifests", "--manifests", help="Manifests directory"),
+):
+    """Manage environments in manifests/environments.yaml."""
+    
+    if action == "list":
+        envs = list_environments(manifests_dir)
+        if not envs:
+            log("No environments found")
+            return
+        
+        panel("Environments", "Config")
+        rows = []
+        for env in envs:
+            env_config = show_environment(env, manifests_dir)
+            component_count = len(env_config) if env_config else 0
+            rows.append([env, str(component_count)])
+        table(["Environment", "Components"], rows)
+        return
+    
+    if action == "show":
+        if not env_name:
+            error("Environment name required for 'show' action")
+            raise typer.Exit(code=1)
+        
+        env_config = show_environment(env_name, manifests_dir)
+        if not env_config:
+            error(f"Environment '{env_name}' not found")
+            raise typer.Exit(code=1)
+        
+        panel(f"Environment: {env_name}", "Config")
+        rows = []
+        for comp_name, version in sorted(env_config.items()):
+            rows.append([comp_name, version])
+        table(["Component", "Version"], rows)
+        return
+    
+    if action == "add":
+        if not env_name:
+            error("Environment name required for 'add' action")
+            raise typer.Exit(code=1)
+        
+        # Parse component versions if provided
+        component_versions = None
+        if component:
+            component_versions = {}
+            for comp_spec in component:
+                if ':' not in comp_spec:
+                    error(f"Invalid component specification: '{comp_spec}'. Use 'component-name:version'")
+                    raise typer.Exit(code=1)
+                comp_name, version = comp_spec.split(':', 1)
+                component_versions[comp_name] = version
+        
+        if not add_environment(env_name, manifests_dir, from_env, component_versions):
+            raise typer.Exit(code=1)
+        return
+    
+    if action == "delete":
+        if not env_name:
+            error("Environment name required for 'delete' action")
+            raise typer.Exit(code=1)
+        
+        if not delete_environment(env_name, manifests_dir):
+            raise typer.Exit(code=1)
+        return
+    
+    if action == "reset":
+        if not typer.confirm("This will reset all environments to defaults (dev, staging, prod). Continue?"):
+            log("Cancelled")
+            return
+        
+        if not reset_environments(manifests_dir):
+            raise typer.Exit(code=1)
+        return
+    
+    if action == "edit":
+        if not env_name:
+            error("Environment name required for 'edit' action")
+            raise typer.Exit(code=1)
+        
+        # Parse component versions if provided
+        component_versions = None
+        if component:
+            component_versions = {}
+            for comp_spec in component:
+                if ':' not in comp_spec:
+                    error(f"Invalid component specification: '{comp_spec}'. Use 'component-name:version'")
+                    raise typer.Exit(code=1)
+                comp_name, version = comp_spec.split(':', 1)
+                component_versions[comp_name] = version
+        
+        if not edit_environment(env_name, manifests_dir, component_versions, set_all):
+            raise typer.Exit(code=1)
+        return
+    
+    error(f"Unknown action: {action}. Use: add, delete, reset, edit, list, or show")
+    raise typer.Exit(code=1)
 

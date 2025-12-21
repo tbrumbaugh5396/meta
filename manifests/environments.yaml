@@ -1,20 +1,16 @@
 environments:
   dev:
-    agent-core: "dev"
-    detector-core: "dev"
-    scraper-capabilities: "dev"
-    infrastructure-components: "dev"
-  
+    agent-core: dev
+    detector-core: dev
+    scraper-capabilities: dev
+    infrastructure-components: dev
   staging:
-    agent-core: "staging"
-    detector-core: "staging"
-    scraper-capabilities: "staging"
-    infrastructure-components: "staging"
-  
+    agent-core: staging
+    detector-core: staging
+    scraper-capabilities: staging
+    infrastructure-components: staging
   prod:
-    agent-core: "prod"
-    detector-core: "prod"
-    scraper-capabilities: "prod"
-    infrastructure-components: "prod"
-
-
+    agent-core: prod
+    detector-core: prod
+    scraper-capabilities: prod
+    infrastructure-components: prod

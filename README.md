@@ -52,6 +52,164 @@ meta-repo/
 └── VERIFICATION_CHECKLIST.md  # Verification checklist
 ```
 
+## Environments
+
+The meta-repo system supports multiple environments, each with its own component versions and configurations. Environments are defined in `manifests/environments.yaml` within each meta-repo.
+
+### Standard Environments
+
+- **`dev`** (Development)
+  - Used for local development and testing
+  - Typically uses the latest or development versions of components
+  - Allows rapid iteration and experimentation
+  - Default environment for most commands
+
+- **`staging`** (Staging)
+  - Pre-production environment for integration testing
+  - Uses stable versions of components
+  - Mirrors production configuration for validation
+  - Used for final testing before production deployment
+
+- **`prod`** (Production)
+  - Live production environment
+  - Uses pinned, stable versions of components
+  - Requires explicit version management
+  - Changes should be carefully validated before deployment
+
+### Environment Configuration
+
+Each environment specifies which version of each component should be used:
+
+```yaml
+environments:
+  dev:
+    agent-core: "dev"
+    detector-core: "dev"
+    infrastructure-primitives: "dev"
+  
+  staging:
+    agent-core: "staging"
+    detector-core: "staging"
+    infrastructure-primitives: "staging"
+  
+  prod:
+    agent-core: "v1.2.3"
+    detector-core: "v2.0.1"
+    infrastructure-primitives: "v3.1.0"
+```
+
+You can specify:
+- Branch names (e.g., `"dev"`, `"main"`, `"feature-x"`)
+- Tag names (e.g., `"v1.2.3"`, `"release-2024-01"`)
+- Commit hashes (e.g., `"abc123def"`)
+
+### Using Environments
+
+Most commands accept an `--env` or `-e` option to specify the environment:
+
+```bash
+# Check status for dev environment (default)
+meta status
+
+# Check status for staging environment
+meta status --env staging
+
+# Apply changes to production
+meta apply --env prod
+
+# Validate production configuration
+meta validate --env prod
+```
+
+### Managing Environments
+
+You can manage environments using the `meta config environment` command:
+
+```bash
+# List all environments
+meta config environment list
+
+# Show details of an environment
+meta config environment show <env-name>
+
+# Add a new environment (defaults to using env-name as version for all components)
+meta config environment add <env-name>
+
+# Add environment by copying from existing
+meta config environment add qa --from dev
+
+# Add environment with specific component versions
+meta config environment add qa --component agent-core:dev --component detector-core:v2.0.0
+
+# Edit an environment (set specific component versions)
+meta config environment edit <env-name> --component agent-core:v1.2.3
+
+# Set all components in an environment to the same version
+meta config environment edit <env-name> --set-all dev
+
+# Delete an environment (cannot delete dev, staging, or prod)
+meta config environment delete <env-name>
+
+# Reset all environments to defaults (dev, staging, prod)
+meta config environment reset
+```
+
+**Note**: The standard environments (`dev`, `staging`, `prod`) cannot be deleted, but can be reset to defaults using the `reset` command.
+
+## Component Status
+
+The `meta status` command displays the current state of all components in your meta-repo. Each component shows a status indicator that reflects its current state relative to the desired version for the selected environment.
+
+### Status Indicators
+
+| Symbol | Status | Meaning |
+|--------|--------|---------|
+| **✓** | Correct Version | Component is checked out at the correct version that matches the desired version for the current environment |
+| **⚠** | Version Mismatch | Component is checked out, but at a different version than what's specified for the current environment |
+| **○** | Not Checked Out | Component repository is not checked out locally (doesn't exist or isn't a git repository) |
+
+### Understanding Status Output
+
+When you run `meta status`, you'll see a table with the following columns:
+
+- **Status**: Visual indicator (✓, ⚠, or ○)
+- **Component**: Name of the component
+- **Desired Version**: Version specified in the environment configuration
+- **Current Version**: Currently checked out version (or "not checked out")
+- **Type**: Component type (e.g., "service", "library", "infrastructure")
+
+### Example Status Output
+
+```
+Status  Component                  Desired Version  Current Version  Type
+✓       agent-core                dev              dev             service
+⚠       detector-core             v2.0.1          v2.0.0          service
+○       infrastructure-primitives  dev              not checked out library
+```
+
+### Resolving Status Issues
+
+**Version Mismatch (⚠)**:
+```bash
+# Checkout the correct version
+meta git checkout <desired-version> --component <component-name>
+
+# Or use apply to sync all components
+meta apply --env <env>
+```
+
+**Not Checked Out (○)**:
+```bash
+# Apply changes to checkout and setup the component
+meta apply --env <env> --component <component-name>
+
+# Or checkout manually
+meta git checkout <desired-version> --component <component-name>
+```
+
+**Correct Version (✓)**:
+- No action needed! The component is at the correct version.
+
 ## Complete Command Reference
 
 ### Core Commands
