@@ -83,11 +83,11 @@ This flexibility is why meta-repo + tooling is a superset of monorepo capabiliti
 
 This implementation provides a complete meta-repo solution with:
 
-- **Hierarchical architecture**: Three levels (platform → scraping → gambling) for clear separation of concerns
 - **Changeset system**: Atomic cross-repo operations via changesets (see [Changeset System](./CHANGESET_SYSTEM.md))
 - **Comprehensive tooling**: CLI that provides monorepo-like ergonomics while preserving architectural boundaries
 - **Integration testing**: System-level validation ensures all components work together
 - **Environment management**: Dev, staging, and production configurations with version pinning
+- **CI/CD integration**: Local testing of GitHub Actions workflows with `act`
 
 ## 🎉 Migration Complete!
 
@@ -387,7 +387,49 @@ meta git push --all
 
 # View log for meta-repo
 meta git log --oneline -n 10 --meta-repo
+
+# Commit with changeset ID
+meta git commit -m "Update feature" --changeset abc12345 --component agent-core
 ```
+
+### Changeset Operations
+
+#### `meta changeset`
+Manage changesets for atomic cross-repo operations.
+
+```bash
+# Create a new changeset
+meta changeset create "Description of change"
+
+# Show changeset details
+meta changeset show <changeset-id>
+
+# List all changesets
+meta changeset list [--limit N] [--status STATUS]
+
+# Show current in-progress changeset
+meta changeset current
+
+# Finalize a changeset
+meta changeset finalize [--id CHANGESET-ID]
+
+# Rollback a changeset across all repos
+meta changeset rollback <changeset-id> [--dry-run]
+
+# Bisect to find breaking changeset
+meta changeset bisect --start ID --end ID --test "COMMAND"
+```
+
+**Git Integration:**
+```bash
+# Commit with changeset ID
+meta git commit -m "Message" --changeset <changeset-id> [--component COMPONENT]
+
+# Lock file with changeset
+meta lock --changeset <changeset-id>
+```
+
+See [Changeset System](./CHANGESET_SYSTEM.md) for complete documentation.
 
 ### Repository Updates
 
@@ -562,8 +604,23 @@ meta conflicts [--component COMPONENT]
 Generate or update lock files.
 
 ```bash
-meta lock [--env ENV] [--component COMPONENT]
+# Generate lock file
+meta lock [--env ENV] [--changeset CHANGESET-ID]
+
+# Validate lock file
+meta lock validate [--env ENV]
+
+# Promote lock file between environments
+meta lock promote <from-env> <to-env>
+
+# Compare lock files
+meta lock compare [--env1 ENV1] [--env2 ENV2]
 ```
+
+Options:
+- `--env ENV`: Environment to generate lock file for
+- `--changeset CHANGESET-ID`: Associate lock file generation with a changeset
+- `--validate`: Validate lock file after generation
 
 ### Rollback & Recovery
 
@@ -624,6 +681,17 @@ Discover components and dependencies.
 meta discover [--path PATH]
 ```
 
+#### `meta search`
+Search for components.
+
+```bash
+# Search components
+meta search components <query> [--type TYPE]
+
+# Search dependencies
+meta search deps <component>
+```
+
 #### `meta compare`
 Compare component versions or configurations.
 
@@ -665,7 +733,14 @@ meta publish [--component COMPONENT] [--version VERSION]
 Migrate components or configurations.
 
 ```bash
-meta migrate [--from FROM] [--to TO]
+# Analyze repository structure
+meta migrate analyze <path> [--output FILE]
+
+# Generate migration plan
+meta migrate plan <source> <target> [--output FILE]
+
+# Execute migration
+meta migrate execute <plan-file> [--dry-run]
 ```
 
 #### `meta registry`
@@ -773,7 +848,19 @@ meta policies [list|apply|validate]
 Execute commands in component contexts.
 
 ```bash
-meta exec <command> [--component COMPONENT] [--all]
+meta exec <command> [--component COMPONENT] [--all] [--parallel]
+```
+
+Examples:
+```bash
+# Run tests in a component
+meta exec pytest tests/ --component agent-core
+
+# Run build command in all components
+meta exec bazel build //... --all
+
+# Run npm install
+meta exec npm install --component scraper-capabilities
 ```
 
 #### `meta backup`
@@ -825,6 +912,266 @@ Show CLI version.
 meta version
 ```
 
+### Component Synchronization
+
+#### `meta sync`
+Synchronize components.
+
+```bash
+# Sync a component
+meta sync component <component> [--env ENV]
+
+# Sync all components
+meta sync all [--env ENV]
+```
+
+### Component History
+
+#### `meta history`
+View component history.
+
+```bash
+# Show history for a component
+meta history show [--component COMPONENT] [--limit N] [--action ACTION]
+
+# Clear history
+meta history clear [--component COMPONENT]
+```
+
+### Component Optimization
+
+#### `meta optimize`
+Analyze and optimize components.
+
+```bash
+# Analyze component
+meta optimize analyze [COMPONENT]
+
+# Apply optimizations
+meta optimize apply <component> [--auto-fix]
+```
+
+### Component Monitoring
+
+#### `meta monitor`
+Monitor component status.
+
+```bash
+meta monitor [--component COMPONENT]
+```
+
+### Component Review
+
+#### `meta review`
+Review component changes.
+
+```bash
+meta review [--component COMPONENT]
+```
+
+### Component Deployment
+
+#### `meta deploy`
+Deploy components.
+
+```bash
+meta deploy [--component COMPONENT] [--env ENV]
+```
+
+### Component Templates
+
+#### `meta templates`
+Manage component templates.
+
+```bash
+meta templates list
+meta templates create <name>
+```
+
+### Component Aliases
+
+#### `meta alias`
+Manage component aliases.
+
+```bash
+meta alias list
+meta alias add <alias> <component>
+meta alias remove <alias>
+```
+
+### Component Benchmarking
+
+#### `meta benchmark`
+Benchmark components.
+
+```bash
+meta benchmark [--component COMPONENT]
+```
+
+### Component Cost Analysis
+
+#### `meta cost`
+Analyze component costs.
+
+```bash
+meta cost [--component COMPONENT]
+```
+
+### Component Compliance
+
+#### `meta compliance`
+Check compliance.
+
+```bash
+meta compliance [--component COMPONENT]
+```
+
+### Component Versioning
+
+#### `meta versioning`
+Manage component versioning strategies.
+
+```bash
+meta versioning [--component COMPONENT]
+```
+
+### Component Notifications
+
+#### `meta notify`
+Configure notifications.
+
+```bash
+meta notify [--component COMPONENT] [--events EVENTS]
+```
+
+### Component Publishing
+
+#### `meta publish`
+Publish components or releases.
+
+```bash
+meta publish [--component COMPONENT] [--version VERSION]
+```
+
+### Component Documentation
+
+#### `meta docs`
+Generate documentation.
+
+```bash
+# Generate documentation
+meta docs generate [--component COMPONENT] [--all] [--format FORMAT]
+
+# Serve documentation
+meta docs serve [--component COMPONENT] [--port PORT]
+```
+
+### Component API
+
+#### `meta api`
+Manage component APIs.
+
+```bash
+meta api [--component COMPONENT]
+```
+
+### Component Dependency Injection
+
+#### `meta di`
+Manage dependency injection.
+
+```bash
+meta di [--component COMPONENT]
+```
+
+### Component Test Templates
+
+#### `meta test-templates`
+Manage test templates.
+
+```bash
+meta test-templates [--component COMPONENT]
+```
+
+### Component Licensing
+
+#### `meta license`
+Manage licenses.
+
+```bash
+meta license [--component COMPONENT]
+```
+
+### Component Garbage Collection
+
+#### `meta gc`
+Garbage collect unused artifacts.
+
+```bash
+meta gc [--component COMPONENT]
+```
+
+### Component Store
+
+#### `meta store`
+Manage content-addressed store.
+
+```bash
+# Add to store
+meta store add <component> --source PATH [--remote URL]
+
+# Get from store
+meta store get <component> <hash> --target PATH
+
+# List store entries
+meta store list [--component COMPONENT]
+```
+
+### Component Cache
+
+#### `meta cache`
+Manage build cache.
+
+```bash
+meta cache [--component COMPONENT]
+```
+
+### Component Release
+
+#### `meta release`
+Manage releases.
+
+```bash
+meta release [--component COMPONENT]
+```
+
+### Component Changelog
+
+#### `meta changelog`
+Generate changelogs.
+
+```bash
+meta changelog [--component COMPONENT]
+```
+
+### Component Security
+
+#### `meta security`
+Security operations.
+
+```bash
+meta security [--component COMPONENT]
+```
+
+### OS Management
+
+#### `meta os`
+OS-level management.
+
+```bash
+meta os [--component COMPONENT]
+```
+
 ## What Was Created
 
 - **19 Component Repositories** - All extracted and structured
@@ -839,35 +1186,92 @@ meta version
 
 ## Key Features
 
-### 1. **Unified Git Operations**
+### 1. **Changeset System for Atomic Operations**
+   - Group commits across multiple repos into logical transactions
+   - Atomic rollback across all repos in a changeset
+   - Bisect to find which changeset introduced a bug
+   - Full audit trail of cross-repo changes
+   - See [Changeset System](./CHANGESET_SYSTEM.md) for details
+
+### 2. **Unified Git Operations**
    - Execute git commands across all repositories
    - Support for meta-repos and components
+   - Changeset integration for atomic commits
    - Parallel execution (planned)
 
-### 2. **Dependency Graph Visualization**
+### 3. **Dependency Graph Visualization**
    - Multiple output formats (text, DOT, Mermaid)
    - Recursive traversal with depth control
    - Component promotion candidate analysis
    - Export to PDF/PNG/SVG
+   - Full meta-repo dependency graphs
 
-### 3. **Repository Management**
+### 4. **Repository Management**
    - Batch updates (add, commit, push)
    - Status tracking across all repos
    - Selective updates (meta-repos only, components only)
+   - Changeset-aware commits
 
-### 4. **Package Management**
+### 5. **Package Management**
    - System-wide package installation
    - Python package management
    - Declarative manifests
+   - Environment-specific dependencies
 
-### 5. **Isolation & Reproducibility**
+### 6. **Isolation & Reproducibility**
    - Virtual environment support
    - Docker containerization
    - Component-specific dependencies
+   - Lock files for exact version pinning
+
+### 7. **CI/CD Integration**
+   - Local testing of GitHub Actions with `act`
+   - Workflow and job testing
+   - Environment-specific test runs
+   - See [CI/CD Testing](#cicd-testing) section
+
+### 8. **Environment Management**
+   - Multiple environments (dev, staging, prod)
+   - Environment-specific component versions
+   - Lock files per environment
+   - Environment promotion workflows
+
+### 9. **Validation & Testing**
+   - System-level validation
+   - Dependency conflict detection
+   - Component health checks
+   - Integration test orchestration
+
+### 10. **Advanced Features**
+   - Component discovery and search
+   - Dependency analysis and visualization
+   - Rollback and recovery
+   - Health monitoring
+   - Analytics and metrics
 
 ## Examples
 
-### Example 1: Check Status and Update All Repos
+### Example 1: Atomic Cross-Repo Changes with Changesets
+
+```bash
+# Create a changeset for a feature
+meta changeset create "Add authentication feature"
+
+# Make changes across multiple repos
+meta git commit -m "Add auth interface" --changeset abc12345 --component agent-core
+meta git commit -m "Implement auth logic" --changeset abc12345 --component detector-core
+
+# Update lock file
+meta lock --changeset abc12345
+
+# Finalize the changeset
+meta changeset finalize abc12345
+
+# If something breaks, rollback the entire changeset
+meta changeset rollback abc12345
+```
+
+### Example 2: Check Status and Update All Repos
 
 ```bash
 # Check current status
@@ -875,35 +1279,45 @@ meta status
 
 # Update all repositories
 meta update all --message "Update dependencies" --push
+
+# Or update selectively
+meta update all --meta-repos-only
+meta update all --components-only
 ```
 
-### Example 2: Visualize Dependencies
+### Example 3: Visualize Dependencies
 
 ```bash
 # Generate Mermaid diagram
-meta graph full --repo gambling-platform-meta --format mermaid --show-components
+meta graph full --format mermaid --show-components
 
 # Export to PDF
 meta graph full --format mermaid --export pdf --image-width 2400
 
 # Find promotion candidates
 meta graph promotion-candidates --min-dependents 2
+
+# Show component dependencies
+meta graph component agent-core --format mermaid
 ```
 
-### Example 3: Git Operations Across Repos
+### Example 4: Git Operations Across Repos
 
 ```bash
 # Check status of all components
 meta git status --all
 
-# Commit changes in specific component
-meta git commit -m "Add feature" --component agent-core
+# Commit changes in specific component with changeset
+meta git commit -m "Add feature" --component agent-core --changeset abc12345
 
 # Push all changes
 meta git push --all
+
+# View log for meta-repo
+meta git log --oneline -n 10 --meta-repo
 ```
 
-### Example 4: Install Dependencies
+### Example 5: Install Dependencies
 
 ```bash
 # Install from manifest
@@ -914,6 +1328,83 @@ meta install python requests pytest
 
 # Install system tools
 meta install system git docker --manager brew
+```
+
+### Example 6: Test CI/CD Locally
+
+```bash
+# List available workflows
+meta cicd test --list
+
+# Test a specific job
+meta cicd test --job validate --event workflow_dispatch --env dev
+
+# Test entire workflow
+meta cicd test --workflow .github/workflows/meta-apply.yml
+
+# Test with custom options
+meta cicd test --job validate --progress --pull-images
+```
+
+### Example 7: Environment Management
+
+```bash
+# Validate dev environment
+meta validate --env dev
+
+# Generate lock file for staging
+meta lock --env staging
+
+# Apply changes to production
+meta apply --env prod --locked
+
+# Compare environments
+meta diff --env1 dev --env2 staging
+```
+
+### Example 8: Dependency Management
+
+```bash
+# Analyze dependencies
+meta deps --component agent-core
+
+# Detect conflicts
+meta conflicts
+
+# Generate lock file
+meta lock --env dev
+
+# Validate lock file
+meta lock validate --env dev
+```
+
+### Example 9: Component Management
+
+```bash
+# Discover components
+meta discover
+
+# Search for components
+meta search components "auth"
+
+# Get component info
+meta info --component agent-core
+
+# Scaffold new component
+meta scaffold component my-component --type bazel
+```
+
+### Example 10: Health and Monitoring
+
+```bash
+# Check health of all components
+meta health --all
+
+# View metrics
+meta metrics --component agent-core
+
+# Monitor system
+meta monitor --component agent-core
 ```
 
 ## Next Steps
