@@ -46,4 +46,8 @@ components/
 .DS_Store
 Thumbs.db
 
+# Large binary files
+*.dmg
+*.pdf
 
+.meta/

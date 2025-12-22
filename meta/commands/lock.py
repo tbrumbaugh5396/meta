@@ -22,6 +22,7 @@ def lock(
     manifests_dir: str = typer.Option("manifests", "--manifests", "-m", help="Manifests directory"),
     lock_file: str = typer.Option("manifests/components.lock.yaml", "--lock-file", "-l", help="Lock file path (ignored if --env is used)"),
     validate: bool = typer.Option(False, "--validate", help="Validate lock file after generation"),
+    changeset: Optional[str] = typer.Option(None, "--changeset", help="Associate lock file generation with a changeset"),
 ):
     """Generate a lock file with exact commit SHAs for reproducible builds."""
     if ctx.invoked_subcommand is None:
@@ -58,6 +59,38 @@ def lock(
             
             success("Lock file generated successfully!")
             log(f"Lock file saved to: {lock_file}")
+        
+        # Track in changeset if provided
+        if changeset:
+            from meta.utils.changeset import load_changeset, save_changeset
+            from meta.utils.manifest import find_meta_repo_root
+            from meta.utils.git import get_commit_sha
+            from pathlib import Path
+            import subprocess
+            
+            cs = load_changeset(changeset)
+            if cs:
+                root = find_meta_repo_root()
+                if root:
+                    # Get commit SHA after lock file is committed
+                    commit_sha = get_commit_sha(str(root))
+                    if commit_sha:
+                        result = subprocess.run(
+                            ["git", "-C", str(root), "branch", "--show-current"],
+                            capture_output=True,
+                            text=True
+                        )
+                        branch = result.stdout.strip() or "main"
+                        
+                        cs.add_repo_commit(
+                            repo_name=root.name,
+                            repo_url="",
+                            commit_sha=commit_sha,
+                            branch=branch,
+                            message=f"Update lock file [changeset:{changeset}]"
+                        )
+                        save_changeset(cs)
+                        log(f"Lock file generation tracked in changeset {changeset}")
         
         log("Commit this file to ensure reproducible builds across environments")
 

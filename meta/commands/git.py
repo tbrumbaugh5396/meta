@@ -245,10 +245,89 @@ def commit(
     all_components: bool = typer.Option(False, "--all", "-a", help="Commit in all components"),
     meta_repo: bool = typer.Option(False, "--meta-repo", help="Commit in meta-repo root"),
     manifests_dir: str = typer.Option("manifests", "--manifests", help="Manifests directory"),
+    changeset: Optional[str] = typer.Option(None, "--changeset", help="Changeset ID to associate with this commit"),
 ):
-    """Create a git commit."""
-    git_args = ["commit", "-m", message]
+    """Create a git commit, optionally associated with a changeset."""
+    from meta.utils.changeset import (
+        load_changeset, get_current_changeset, extract_changeset_id_from_message,
+        find_meta_repo_root, get_components
+    )
+    from meta.utils.git import get_commit_sha, get_current_version
+    from pathlib import Path
+    import subprocess
+    
+    # Check for changeset ID in message or option
+    changeset_id = changeset
+    if not changeset_id:
+        changeset_id = extract_changeset_id_from_message(message)
+    
+    # If no changeset ID found, try to use current in-progress changeset
+    if not changeset_id:
+        current_cs = get_current_changeset()
+        if current_cs:
+            changeset_id = current_cs.id
+            log(f"Using current changeset: {changeset_id}")
+    
+    # Add changeset ID to commit message if found
+    final_message = message
+    if changeset_id and f"[changeset:{changeset_id}]" not in message:
+        final_message = f"{message} [changeset:{changeset_id}]"
+    
+    git_args = ["commit", "-m", final_message]
+    
+    # Execute the commit
     execute_git_command(git_args, component, all_components, meta_repo, manifests_dir)
+    
+    # Track commit in changeset if changeset ID exists
+    if changeset_id:
+        changeset_obj = load_changeset(changeset_id)
+        if changeset_obj:
+            # Determine which repo this commit is in
+            root = find_meta_repo_root()
+            if root:
+                if meta_repo:
+                    repo_name = root.name
+                    repo_path = root
+                elif component:
+                    repo_name = component
+                    repo_path = root / "components" / component
+                    if not repo_path.exists():
+                        repo_path = root.parent / component
+                else:
+                    # Default to meta-repo
+                    repo_name = root.name
+                    repo_path = root
+                
+                if repo_path.exists():
+                    # Get commit SHA
+                    commit_sha = get_commit_sha(str(repo_path))
+                    if commit_sha:
+                        # Get repo URL from manifest if component
+                        repo_url = ""
+                        if component:
+                            components = get_components(manifests_dir)
+                            if component in components:
+                                repo_url = components[component].get("repo", "")
+                        
+                        # Get branch
+                        result = subprocess.run(
+                            ["git", "-C", str(repo_path), "branch", "--show-current"],
+                            capture_output=True,
+                            text=True
+                        )
+                        branch = result.stdout.strip() or "main"
+                        
+                        # Add to changeset
+                        changeset_obj.add_repo_commit(
+                            repo_name=repo_name,
+                            repo_url=repo_url,
+                            commit_sha=commit_sha,
+                            branch=branch,
+                            message=final_message
+                        )
+                        from meta.utils.changeset import save_changeset
+                        save_changeset(changeset_obj)
+                        log(f"Tracked commit in changeset {changeset_id}")
 
 
 @app.command()

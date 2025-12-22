@@ -2,6 +2,93 @@
 
 A powerful command-line tool for managing hierarchical meta-repository architectures. The `meta` CLI provides comprehensive capabilities for orchestrating multi-repository projects, managing dependencies, visualizing relationships, and automating common development workflows.
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Quick Start](#quick-start)
+- [Quick Links](#quick-links)
+- [Environments](#environments)
+- [Component Status](#component-status)
+- [Complete Command Reference](#complete-command-reference)
+- [What Was Created](#what-was-created)
+- [Key Features](#key-features)
+- [Examples](#examples)
+- [Next Steps](#next-steps)
+- [Status](#status)
+
+## Introduction
+
+### Understanding Repository Architectures
+
+Modern software systems can be organized using different repository architectures, each with distinct trade-offs. The meta-repo approach combines the best aspects of monorepos and polyrepos while providing system-level orchestration.
+
+#### Core Repository Types
+
+| Type | Definition | Strengths | Weaknesses |
+|------|------------|----------|------------|
+| **Monorepo** | All code in a single repository | Atomic commits, fast refactors, simple CI, unified history | Harder ownership boundaries, less modularity, limited permissions control |
+| **Polyrepo** | Each subsystem in its own repository | Clear ownership, modularity, independent versioning, permissions control | Harder cross-repo refactors, more complex CI, coordination required |
+| **Meta-repo** | Aggregates multiple repos (mono, poly, or other meta) | System-level orchestration, integration tests, virtual monorepo experience, flexible boundaries | Requires tooling and CI investment, Git-level atomicity is simulated |
+
+#### The Meta-Repo Advantage
+
+Meta-repos act as a **superset** of monorepo and polyrepo capabilities:
+
+```
+          [Meta-Repo]
+          /    |    \
+       [Mono] [Poly] [Meta]
+```
+
+**Key Benefits:**
+
+1. **Virtual Monorepo Experience**: With proper tooling, developers get monorepo-like workflows (fast refactors, unified search, atomic changes via changesets) while maintaining polyrepo benefits (modularity, ownership, permissions).
+
+2. **Flexible Boundaries**: You can operate in "mono mode" when velocity matters, and "poly mode" when you need to enforce modularity, contracts, and independent releases.
+
+3. **System-Level Correctness**: Meta-repos provide integration testing, dependency validation, and atomic changesets that ensure the entire system works together correctly.
+
+4. **Architectural Discipline**: The friction of cross-repo changes encourages explicit contracts, stable interfaces, and better system design—mirroring how distributed systems actually work.
+
+#### Tooling Effects
+
+| Capability | Monorepo | Polyrepo | Meta-Repo + Tooling |
+|------------|----------|----------|---------------------|
+| Developer workflow | ✅ | ⚠️ | ✅ (virtual monorepo) |
+| Atomic commits | ✅ | ❌ | ✅ (simulated via changesets) |
+| Global refactors | ✅ | ⚠️ | ✅ (coordinated via tooling) |
+| CI simplicity | ✅ | ⚠️ | ✅ (meta-repo CI orchestrates) |
+| Ownership / permissions | Low | High | High |
+| Modular boundaries | Soft | Hard | Hard + enforced |
+
+#### Why Meta-Repos?
+
+Meta-repos provide **flexibility**—the "best of both worlds":
+
+- **Mono mode**: Fast refactors, debugging, local testing—works whenever you need it
+- **Poly mode**: Enforce modularity, contracts, releases, and permissions—works whenever beneficial  
+- **Meta mode**: Integrates everything, guarantees system-level correctness, enforces atomic changes via changesets, enables nested orchestration
+
+This flexibility is why meta-repo + tooling is a superset of monorepo capabilities. You can always use it as a monorepo, but you gain modularity, ownership, and enforcement that a pure monorepo cannot provide.
+
+#### Key Takeaways
+
+- **Meta-repo = superset of mono + poly**: Combines the strengths of both approaches
+- **Tooling + changesets**: Simulate atomic commits and global refactors across repos
+- **Developer experience**: Can be monorepo-like, even across multiple repositories
+- **Architecture enforcement**: Modularity and contracts are enforced without sacrificing workflow
+- **Dynamic trade-offs**: Teams can dial between speed, discipline, and autonomy as needed
+
+### This Meta-Repo System
+
+This implementation provides a complete meta-repo solution with:
+
+- **Hierarchical architecture**: Three levels (platform → scraping → gambling) for clear separation of concerns
+- **Changeset system**: Atomic cross-repo operations via changesets (see [Changeset System](./CHANGESET_SYSTEM.md))
+- **Comprehensive tooling**: CLI that provides monorepo-like ergonomics while preserving architectural boundaries
+- **Integration testing**: System-level validation ensures all components work together
+- **Environment management**: Dev, staging, and production configurations with version pinning
+
 ## 🎉 Migration Complete!
 
 This project has been successfully migrated to a hierarchical meta-repo architecture.
@@ -593,6 +680,68 @@ Launch web dashboard (if available).
 
 ```bash
 meta dashboard [--port PORT]
+```
+
+### CI/CD Testing
+
+#### `meta cicd test`
+Test CI/CD pipelines locally using `act` (GitHub Actions runner).
+
+```bash
+# List available workflows and jobs
+meta cicd test --list
+
+# Test a specific workflow
+meta cicd test --workflow .github/workflows/meta-apply.yml
+
+# Test a specific job
+meta cicd test --job validate
+
+# Test with workflow_dispatch event and environment input
+meta cicd test --event workflow_dispatch --env dev
+
+# Dry run (see what would execute without running)
+meta cicd test --dry-run
+
+# Use custom secrets file
+meta cicd test --secrets-file .secrets
+```
+
+**Prerequisites:**
+- Install `act`: `brew install act` (macOS) or see https://github.com/nektos/act
+- Docker must be running (act uses Docker containers)
+- Optional: Create `.secrets` file for any required secrets
+
+**Setup:**
+```bash
+# Get setup instructions and check prerequisites
+meta cicd setup github
+```
+
+**Examples:**
+```bash
+# Test the validate job
+meta cicd test --job validate
+
+# Test the full apply workflow with staging environment
+meta cicd test --workflow .github/workflows/meta-apply.yml --event workflow_dispatch --env staging
+
+# List all available workflows
+meta cicd test --list
+```
+
+#### `meta cicd setup`
+Set up local testing environment for CI/CD providers.
+
+```bash
+# Setup for GitHub Actions (uses act)
+meta cicd setup github
+
+# Setup for GitLab CI
+meta cicd setup gitlab
+
+# Setup for Jenkins
+meta cicd setup jenkins
 ```
 
 ### Security & Compliance
