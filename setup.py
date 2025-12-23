@@ -9,7 +9,9 @@ setup(
     version="0.1.0",
     description="Meta-repo CLI for system orchestration",
     author="Your Name",
-    packages=find_packages(),
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
+    py_modules=["meta_launcher"],
     install_requires=[
         "typer>=0.9.0",
         "PyYAML>=6.0",
@@ -17,7 +19,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "meta=meta.cli:main",
+            "meta=meta_launcher:main",
         ],
     },
     python_requires=">=3.8",

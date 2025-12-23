@@ -5,7 +5,8 @@ import os
 
 # CRITICAL: Ensure our package directory is in the path FIRST
 # This prevents conflicts with other 'meta' packages installed system-wide
-_setup_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# For src-layout: go up from src/meta/cli.py -> src/ -> repo root
+_setup_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _setup_dir not in sys.path:
     sys.path.insert(0, _setup_dir)
 
