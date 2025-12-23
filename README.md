@@ -34,8 +34,8 @@ Modern software systems can be organized using different repository architecture
 Meta-repos act as a **superset** of monorepo and polyrepo capabilities:
 
 ```
-            [Meta-Repo]
-            /     |    \
+             [Meta-Repo]
+            /    |     \
        [Mono]  [Poly]  [Meta]
 ```
 
