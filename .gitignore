@@ -17,6 +17,7 @@ sdist/
 var/
 wheels/
 *.egg-info/
+**/*.egg-info/  # Also match in subdirectories (like src/)
 .installed.cfg
 *.egg
 
