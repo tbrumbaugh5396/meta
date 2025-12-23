@@ -36,7 +36,7 @@ Meta-repos act as a **superset** of monorepo and polyrepo capabilities:
 ```
             [Meta-Repo]
             /    |    \
-       [Mono] [Poly] [Meta]
+       [Mono]  [Poly]  [Meta]
 ```
 
 **Key Benefits:**
