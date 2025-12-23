@@ -730,7 +730,7 @@ See [Changeset System](./docs/CHANGESET_SYSTEM.md) for complete documentation.
 ### Vendor Operations (Linus-Safe Mode)
 
 #### `meta vendor`
-Vendor components into meta-repo for Linus-safe materialization.
+Vendor components into meta-repo for Linus-safe materialization with comprehensive safety features.
 
 **Enable Vendored Mode:**
 ```yaml
@@ -744,10 +744,10 @@ components:
     version: "v1.2.3"
 ```
 
-**Commands:**
+**Basic Commands:**
 ```bash
 # Import a single component
-meta vendor import <component-name>
+meta vendor import-component <component-name>
 
 # Import all components
 meta vendor import-all
@@ -759,31 +759,98 @@ meta vendor import-all --force
 meta vendor status
 ```
 
-**Workflow:**
+**Enhanced Conversion Commands:**
 ```bash
-# 1. Enable vendored mode in components.yaml
-# 2. Import components
-meta vendor import-all
+# Convert with all safety features (recommended)
+meta vendor convert vendored \
+  --dry-run \              # Preview changes first
+  --backup \               # Create backup (default)
+  --atomic \               # All-or-nothing (default)
+  --check-secrets \        # Security check (default)
+  --verify                 # Verify after (default)
 
-# 3. Review and commit
-git add components/
-git commit -m "Vendor all components"
+# Convert with continue-on-error
+meta vendor convert vendored --continue-on-error
 
-# 4. Build and test
-meta apply --all
+# Convert with specific options
+meta vendor convert vendored \
+  --fail-on-secrets \      # Fail if secrets detected
+  --changeset abc12345 \   # Track in changeset
+  --no-respect-gitignore   # Include all files
+
+# Convert to reference mode
+meta vendor convert reference
 ```
 
-See [Vendored Mode](./docs/VENDORED_MODE.md) for complete documentation.
-
-**Conversion Commands:**
+**Safety & Recovery Commands:**
 ```bash
-# Convert between modes
-meta vendor convert vendored    # Convert to vendored mode
-meta vendor convert reference   # Convert to reference mode
+# Verify conversion success
+meta vendor verify
 
-# Production release workflow
+# Create manual backup
+meta vendor backup --name my-backup
+
+# Restore from backup
+meta vendor restore my-backup
+
+# List available backups
+meta vendor list-backups
+
+# Resume interrupted conversion
+meta vendor resume
+
+# Resume from specific checkpoint
+meta vendor resume --checkpoint checkpoint-123
+
+# List conversion checkpoints
+meta vendor list-checkpoints
+```
+
+**Production Release Workflow:**
+```bash
+# Production release (converts to vendored with semantic versions)
 meta vendor release --env prod --version v1.0.0
 ```
+
+**Complete Workflow Example:**
+```bash
+# 1. Preview conversion (dry-run)
+meta vendor convert vendored --dry-run
+
+# 2. Convert with all safety features
+meta vendor convert vendored \
+  --backup \
+  --atomic \
+  --check-secrets \
+  --verify \
+  --changeset abc12345
+
+# 3. If interrupted, resume
+meta vendor resume
+
+# 4. Verify conversion
+meta vendor verify
+
+# 5. If needed, restore from backup
+meta vendor restore backup_20240115_120000
+```
+
+**Enhanced Features:**
+- ✅ **Pre-conversion validation** - Validates prerequisites automatically
+- ✅ **Dry-run mode** - Preview changes without making them
+- ✅ **Continue-on-error** - Continue converting other components if one fails
+- ✅ **Dependency-aware ordering** - Converts in correct dependency order
+- ✅ **Secret detection** - Scans for API keys, passwords, tokens
+- ✅ **Automatic backup** - Creates backup before conversion
+- ✅ **Atomic transactions** - All-or-nothing conversion with rollback
+- ✅ **File filtering** - Respects .gitignore patterns
+- ✅ **Network resilience** - Automatic retry with exponential backoff
+- ✅ **Conversion resume** - Resume from checkpoint after interruption
+- ✅ **Changeset integration** - Track conversions in changesets
+- ✅ **Semantic version validation** - Ensures production-ready versions
+- ✅ **Conversion verification** - Verifies conversion success
+
+See [Vendored Mode](./docs/VENDORED_MODE.md) and [Vendor Enhancements](./docs/VENDOR_ENHANCEMENTS.md) for complete documentation.
 
 ### Repository Updates
 

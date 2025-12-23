@@ -22,13 +22,19 @@ tests/
 │   │   ├── test_graph.py
 │   │   ├── test_install.py
 │   │   ├── test_update.py
-│   │   └── test_health.py
+│   │   ├── test_health.py
+│   │   └── test_vendor.py
 │   └── utils/             # Utility tests
 │       ├── test_manifest.py
 │       ├── test_git_utils.py
 │       ├── test_bazel.py
 │       ├── test_dependencies_utils.py
-│       └── test_changeset_utils.py
+│       ├── test_changeset_utils.py
+│       ├── test_vendor.py
+│       ├── test_secret_detection.py
+│       ├── test_vendor_validation.py
+│       ├── test_vendor_backup.py
+│       └── test_vendor_resume.py
 ├── integration/           # Integration tests
 └── conftest.py           # Pytest fixtures with DI support
 ```
@@ -63,6 +69,13 @@ Common mocks are available via factories:
 - `mock_store_service()` - Content-addressed store
 - `mock_health_service()` - Health checks
 - `mock_changeset_service()` - Changeset operations
+- `mock_vendor_service()` - Vendor operations
+- `mock_secret_detection_service()` - Secret detection
+- `mock_vendor_validation_service()` - Vendor validation
+- `mock_vendor_backup_service()` - Backup/restore
+- `mock_vendor_transaction_service()` - Atomic transactions
+- `mock_vendor_network_service()` - Network resilience
+- `mock_vendor_resume_service()` - Conversion resume
 
 ## Running Tests
 
@@ -141,6 +154,7 @@ def test_with_custom_mock(di_container):
 - ✅ `install` - Package installation
 - ✅ `update` - Repository updates
 - ✅ `health` - Health checks
+- ✅ `vendor` - Vendor operations (with all enhancements)
 
 ### Utilities Tested
 
@@ -149,6 +163,11 @@ def test_with_custom_mock(di_container):
 - ✅ `bazel` - Bazel utilities
 - ✅ `dependencies` - Dependency resolution
 - ✅ `changeset` - Changeset utilities
+- ✅ `vendor` - Vendor utilities
+- ✅ `secret_detection` - Secret detection
+- ✅ `vendor_validation` - Vendor validation
+- ✅ `vendor_backup` - Backup/restore
+- ✅ `vendor_resume` - Conversion resume
 
 ## Best Practices
 
@@ -172,6 +191,10 @@ Creates a temporary meta-repo structure with manifests and components directorie
 ### `mock_git`, `mock_bazel`, etc.
 
 Pre-configured mock services for common dependencies.
+
+### `mock_vendor`, `mock_secret_detection`, etc.
+
+Pre-configured mock services for vendor operations and related utilities.
 
 ## Example Test
 
@@ -204,5 +227,92 @@ class TestMyCommand:
             
             assert result.exit_code == 0
             mock_get.assert_called()
+```
+
+## Test Summary
+
+### Total Test Coverage
+
+- **Commands**: 10 command groups tested
+- **Utilities**: 10+ utility modules tested
+- **Vendor System**: Comprehensive coverage of all vendor features
+
+### Vendor Test Coverage
+
+- ✅ **Secret Detection** - 11 tests
+- ✅ **Vendor Validation** - 6 tests
+- ✅ **Vendor Backup** - 6 tests
+- ✅ **Vendor Resume** - 7 tests
+- ✅ **Vendor Commands** - 18 tests
+- ✅ **Vendor Utilities** - 10 tests
+
+**Total Vendor Tests**: 58 tests covering all critical and high-value features
+
+## Vendor Testing
+
+### New Vendor Features Tested
+
+The vendor system now includes comprehensive tests for all new features:
+
+- **Secret Detection** (`test_secret_detection.py`)
+  - File scanning
+  - Directory scanning
+  - Component-level detection
+  - Exclusion patterns
+
+- **Vendor Validation** (`test_vendor_validation.py`)
+  - Prerequisite validation
+  - Component validation
+  - Conversion readiness checks
+
+- **Vendor Backup** (`test_vendor_backup.py`)
+  - Backup creation
+  - Backup listing
+  - Backup restoration
+
+- **Vendor Resume** (`test_vendor_resume.py`)
+  - Checkpoint creation
+  - Checkpoint loading
+  - Conversion resumption
+
+- **Vendor Commands** (`test_vendor.py`)
+  - All new commands (verify, backup, restore, resume)
+  - Enhanced convert command with all options
+  - Error handling
+
+### Example Vendor Test
+
+```python
+"""Example vendor test."""
+import pytest
+from unittest.mock import patch
+from typer.testing import CliRunner
+from meta.cli import app
+
+
+class TestVendorCommand:
+    """Tests for vendor commands."""
+    
+    def test_vendor_convert_with_dry_run(self, temp_meta_repo, mock_vendor):
+        """Test convert with dry-run."""
+        runner = CliRunner()
+        
+        with patch("meta.commands.vendor.convert_to_vendored_mode_enhanced", 
+                   return_value=(True, {'dry_run': True})):
+            result = runner.invoke(app, [
+                "vendor", "convert", "vendored", "--dry-run"
+            ])
+            
+            assert result.exit_code == 0
+    
+    def test_vendor_verify(self, temp_meta_repo, mock_vendor):
+        """Test verify command."""
+        runner = CliRunner()
+        
+        with patch("meta.commands.vendor.verify_conversion",
+                   return_value=(True, {'components_valid': 1})):
+            result = runner.invoke(app, ["vendor", "verify"])
+            
+            assert result.exit_code == 0
 ```
 

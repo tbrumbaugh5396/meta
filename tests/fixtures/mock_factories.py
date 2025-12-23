@@ -156,6 +156,125 @@ def mock_vendor_service() -> MagicMock:
     mock.convert_to_vendored_mode.return_value = True
     mock.convert_to_reference_mode.return_value = True
     mock.convert_to_vendored_for_production.return_value = True
+    mock.convert_to_vendored_mode_enhanced.return_value = (True, {
+        'successful': ['test-component'],
+        'failed': [],
+        'skipped': [],
+        'errors': []
+    })
+    mock.verify_conversion.return_value = (True, {
+        'valid': True,
+        'components_checked': 1,
+        'components_valid': 1,
+        'components_invalid': 0,
+        'errors': []
+    })
+    return mock
+
+
+def mock_secret_detection_service() -> MagicMock:
+    """Create a mock secret detection service."""
+    mock = MagicMock()
+    mock.scan_file_for_secrets.return_value = []
+    mock.scan_directory_for_secrets.return_value = {
+        'secrets_found': [],
+        'total_files_scanned': 10,
+        'total_secrets': 0,
+        'error': None
+    }
+    mock.detect_secrets_in_component.return_value = (True, {
+        'secrets_found': [],
+        'total_files_scanned': 10,
+        'total_secrets': 0
+    })
+    mock.should_exclude_file.return_value = False
+    return mock
+
+
+def mock_vendor_validation_service() -> MagicMock:
+    """Create a mock vendor validation service."""
+    mock = MagicMock()
+    mock.validate_prerequisites.return_value = (True, [])
+    mock.validate_component_for_vendor.return_value = (True, [])
+    mock.validate_conversion_readiness.return_value = (True, [], {
+        'prerequisites': {'valid': True, 'errors': []},
+        'components': {'total': 1, 'valid': 1, 'invalid': 0, 'errors': {}},
+        'dependencies': {'valid': True, 'errors': [], 'conversion_order': ['test-component']},
+        'secrets': {'found': 0, 'files_scanned': 10}
+    })
+    return mock
+
+
+def mock_vendor_backup_service() -> MagicMock:
+    """Create a mock vendor backup service."""
+    mock = MagicMock()
+    mock.create_backup.return_value = Path(".meta/backups/backup_20240115_120000")
+    mock.list_backups.return_value = [{
+        'backup_name': 'backup_20240115_120000',
+        'created_at': '2024-01-15T12:00:00Z',
+        'includes_components': True
+    }]
+    mock.restore_backup.return_value = True
+    mock.get_latest_backup.return_value = {
+        'backup_name': 'backup_20240115_120000',
+        'created_at': '2024-01-15T12:00:00Z'
+    }
+    return mock
+
+
+def mock_vendor_transaction_service() -> MagicMock:
+    """Create a mock vendor transaction service."""
+    mock = MagicMock()
+    mock_transaction = MagicMock()
+    mock_transaction.transaction_id = "txn-123"
+    mock_transaction.create_checkpoint.return_value = True
+    mock_transaction.commit.return_value = True
+    mock_transaction.rollback.return_value = True
+    mock.create_transaction.return_value = mock_transaction
+    mock.atomic_conversion.return_value = True
+    return mock
+
+
+def mock_vendor_network_service() -> MagicMock:
+    """Create a mock vendor network service."""
+    mock = MagicMock()
+    mock.retry_with_backoff.return_value = (True, None)
+    mock.git_clone_with_retry.return_value = True
+    mock.git_checkout_with_retry.return_value = True
+    mock.git_pull_with_retry.return_value = True
+    return mock
+
+
+def mock_vendor_resume_service() -> MagicMock:
+    """Create a mock vendor resume service."""
+    mock = MagicMock()
+    mock_checkpoint = MagicMock()
+    mock_checkpoint.checkpoint_id = "checkpoint-123"
+    mock_checkpoint.completed_components = set()
+    mock_checkpoint.failed_components = set()
+    mock_checkpoint.pending_components = ['test-component']
+    mock_checkpoint.is_completed.return_value = False
+    mock_checkpoint.is_failed.return_value = False
+    mock_checkpoint.mark_completed.return_value = None
+    mock_checkpoint.mark_failed.return_value = None
+    mock_checkpoint.save.return_value = None
+    mock_checkpoint.get_progress.return_value = {
+        'total': 1,
+        'completed': 0,
+        'failed': 0,
+        'pending': 1,
+        'progress_percent': 0.0
+    }
+    mock.create_checkpoint.return_value = mock_checkpoint
+    mock.load_checkpoint.return_value = mock_checkpoint
+    mock.resume_conversion.return_value = mock_checkpoint
+    mock.get_latest_checkpoint.return_value = mock_checkpoint
+    mock.list_checkpoints.return_value = [{
+        'checkpoint_id': 'checkpoint-123',
+        'created_at': '2024-01-15T12:00:00Z',
+        'target_mode': 'vendored'
+    }]
+    mock.cleanup_checkpoint.return_value = None
     return mock
 
 

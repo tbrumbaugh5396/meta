@@ -16,6 +16,12 @@ from .fixtures.mock_factories import (
     mock_health_service,
     mock_changeset_service,
     mock_vendor_service,
+    mock_secret_detection_service,
+    mock_vendor_validation_service,
+    mock_vendor_backup_service,
+    mock_vendor_transaction_service,
+    mock_vendor_network_service,
+    mock_vendor_resume_service,
     mock_file_system
 )
 
@@ -35,6 +41,12 @@ def di_container():
     container.register("health", mock_health_service())
     container.register("changeset", mock_changeset_service())
     container.register("vendor", mock_vendor_service())
+    container.register("secret_detection", mock_secret_detection_service())
+    container.register("vendor_validation", mock_vendor_validation_service())
+    container.register("vendor_backup", mock_vendor_backup_service())
+    container.register("vendor_transaction", mock_vendor_transaction_service())
+    container.register("vendor_network", mock_vendor_network_service())
+    container.register("vendor_resume", mock_vendor_resume_service())
     return container
 
 
@@ -140,5 +152,41 @@ def mock_changeset(di_container):
 def mock_vendor(di_container):
     """Provide a mocked vendor service."""
     return di_container.get("vendor")
+
+
+@pytest.fixture
+def mock_secret_detection(di_container):
+    """Provide a mocked secret detection service."""
+    return di_container.get("secret_detection")
+
+
+@pytest.fixture
+def mock_vendor_validation(di_container):
+    """Provide a mocked vendor validation service."""
+    return di_container.get("vendor_validation")
+
+
+@pytest.fixture
+def mock_vendor_backup(di_container):
+    """Provide a mocked vendor backup service."""
+    return di_container.get("vendor_backup")
+
+
+@pytest.fixture
+def mock_vendor_transaction(di_container):
+    """Provide a mocked vendor transaction service."""
+    return di_container.get("vendor_transaction")
+
+
+@pytest.fixture
+def mock_vendor_network(di_container):
+    """Provide a mocked vendor network service."""
+    return di_container.get("vendor_network")
+
+
+@pytest.fixture
+def mock_vendor_resume(di_container):
+    """Provide a mocked vendor resume service."""
+    return di_container.get("vendor_resume")
 
 

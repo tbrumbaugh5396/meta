@@ -340,8 +340,33 @@ To migrate from reference mode to vendored mode:
 3. **Larger repository**: Source code is duplicated
 4. **Import time**: Initial import can be slow for large components
 
+## Enhanced Features
+
+The vendor system includes comprehensive safety and reliability features:
+
+### Safety Features
+- **Pre-conversion validation** - Validates prerequisites before conversion
+- **Secret detection** - Scans for API keys, passwords, tokens before vendoring
+- **Automatic backup** - Creates backup before conversion
+- **Atomic transactions** - All-or-nothing conversion with automatic rollback
+
+### Reliability Features
+- **Network resilience** - Automatic retry with exponential backoff
+- **Continue-on-error** - Continue converting other components if one fails
+- **Conversion resume** - Resume from checkpoint after interruption
+- **Dependency-aware ordering** - Converts in correct dependency order
+
+### Developer Experience
+- **Dry-run mode** - Preview changes without making them
+- **File filtering** - Respects .gitignore patterns
+- **Conversion verification** - Verifies conversion success
+- **Changeset integration** - Tracks conversions in changesets
+
+See [Vendor Enhancements](./VENDOR_ENHANCEMENTS.md) for complete documentation of all features.
+
 ## See Also
 
+- [Vendor Enhancements](./VENDOR_ENHANCEMENTS.md) - Complete feature documentation
 - [Changeset System](./CHANGESET_SYSTEM.md) - Atomic cross-repo operations
 - [Lock Files](./PHASE1_ENHANCEMENTS.md#1-lock-files) - Reproducible builds
 - [README.md](../README.md) - Complete documentation

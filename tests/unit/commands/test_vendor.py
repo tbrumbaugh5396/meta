@@ -2,6 +2,7 @@
 
 import pytest
 from unittest.mock import patch, MagicMock
+from pathlib import Path
 from typer.testing import CliRunner
 from meta.cli import app
 
@@ -71,7 +72,7 @@ class TestVendorCommand:
         """Test converting to vendored mode."""
         runner = CliRunner()
         
-        with patch("meta.commands.vendor.convert_to_vendored_mode", return_value=True):
+        with patch("meta.commands.vendor.convert_to_vendored_mode_enhanced", return_value=(True, {'successful': ['comp1']})):
             result = runner.invoke(app, ["vendor", "convert", "vendored"])
             
             assert result.exit_code == 0
@@ -135,4 +136,74 @@ class TestVendorCommand:
             result = runner.invoke(app, ["vendor", "status"])
             
             assert result.exit_code == 1
+    
+    def test_vendor_convert_with_dry_run(self, temp_meta_repo, mock_vendor):
+        """Test convert command with dry-run."""
+        runner = CliRunner()
+        
+        with patch("meta.commands.vendor.convert_to_vendored_mode_enhanced", return_value=(True, {'dry_run': True})):
+            result = runner.invoke(app, ["vendor", "convert", "vendored", "--dry-run"])
+            
+            assert result.exit_code == 0
+    
+    def test_vendor_convert_with_continue_on_error(self, temp_meta_repo, mock_vendor):
+        """Test convert command with continue-on-error."""
+        runner = CliRunner()
+        
+        with patch("meta.commands.vendor.convert_to_vendored_mode_enhanced", return_value=(True, {'successful': ['comp1'], 'failed': ['comp2']})):
+            result = runner.invoke(app, ["vendor", "convert", "vendored", "--continue-on-error"])
+            
+            assert result.exit_code == 0
+    
+    def test_vendor_verify(self, temp_meta_repo, mock_vendor):
+        """Test verify command."""
+        runner = CliRunner()
+        
+        with patch("meta.commands.vendor.verify_conversion", return_value=(True, {'components_valid': 1, 'components_checked': 1})):
+            result = runner.invoke(app, ["vendor", "verify"])
+            
+            assert result.exit_code == 0
+    
+    def test_vendor_backup(self, temp_meta_repo, mock_vendor):
+        """Test backup command."""
+        runner = CliRunner()
+        
+        backup_path = temp_meta_repo["path"] / ".meta" / "backups" / "test-backup"
+        backup_path.mkdir(parents=True, exist_ok=True)
+        
+        with patch("meta.utils.vendor_backup.create_backup", return_value=backup_path):
+            result = runner.invoke(app, ["vendor", "backup", "--name", "test-backup"])
+            
+            assert result.exit_code == 0
+    
+    def test_vendor_list_backups(self, temp_meta_repo, mock_vendor):
+        """Test list-backups command."""
+        runner = CliRunner()
+        
+        with patch("meta.commands.vendor.list_backups", return_value=[]):
+            result = runner.invoke(app, ["vendor", "list-backups"])
+            
+            assert result.exit_code == 0
+    
+    def test_vendor_resume(self, temp_meta_repo, mock_vendor):
+        """Test resume command."""
+        runner = CliRunner()
+        
+        mock_checkpoint = MagicMock()
+        mock_checkpoint.checkpoint_id = "checkpoint-123"
+        
+        with patch("meta.utils.vendor_resume.resume_conversion", return_value=mock_checkpoint), \
+             patch("meta.commands.vendor.convert_to_vendored_mode_enhanced", return_value=(True, {'successful': ['comp1']})):
+            result = runner.invoke(app, ["vendor", "resume"])
+            
+            assert result.exit_code == 0
+    
+    def test_vendor_list_checkpoints(self, temp_meta_repo, mock_vendor):
+        """Test list-checkpoints command."""
+        runner = CliRunner()
+        
+        with patch("meta.commands.vendor.list_checkpoints", return_value=[]):
+            result = runner.invoke(app, ["vendor", "list-checkpoints"])
+            
+            assert result.exit_code == 0
 
