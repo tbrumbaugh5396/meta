@@ -151,3 +151,52 @@ def scan_all_vulnerabilities(component_dir: str) -> Dict[str, Any]:
     return results
 
 
+def scan_vulnerabilities(
+    component: str,
+    manifests_dir: str = "manifests"
+) -> Dict[str, Any]:
+    """Scan vulnerabilities for a component."""
+    from meta.utils.manifest import get_components
+    
+    components = get_components(manifests_dir)
+    if component not in components:
+        return {
+            "component": component,
+            "safe": False,
+            "error": f"Component {component} not found"
+        }
+    
+    comp_info = components[component]
+    
+    # Determine component directory
+    comp_dir = Path(f"components/{component}")
+    if not comp_dir.exists():
+        return {
+            "component": component,
+            "safe": False,
+            "error": f"Component directory not found: {comp_dir}"
+        }
+    
+    # Scan vulnerabilities
+    scan_results = scan_all_vulnerabilities(str(comp_dir))
+    
+    # Determine if safe
+    safe = True
+    all_vulnerabilities = []
+    
+    for pm, pm_results in scan_results.items():
+        if "error" in pm_results:
+            continue
+        vulnerabilities = pm_results.get("vulnerabilities", [])
+        if vulnerabilities:
+            safe = False
+            all_vulnerabilities.extend(vulnerabilities)
+    
+    return {
+        "component": component,
+        "safe": safe,
+        "package_managers": scan_results,
+        "vulnerabilities": all_vulnerabilities
+    }
+
+

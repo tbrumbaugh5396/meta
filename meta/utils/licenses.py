@@ -151,3 +151,53 @@ def check_all_licenses(component_dir: str, allowed_licenses: Optional[List[str]]
     return results
 
 
+def check_license_compliance(
+    component: str,
+    manifests_dir: str = "manifests",
+    allowed_licenses: Optional[List[str]] = None
+) -> Dict[str, Any]:
+    """Check license compliance for a component."""
+    from meta.utils.manifest import get_components
+    
+    components = get_components(manifests_dir)
+    if component not in components:
+        return {
+            "component": component,
+            "compliant": False,
+            "error": f"Component {component} not found"
+        }
+    
+    comp_info = components[component]
+    comp_type = comp_info.get("type", "unknown")
+    
+    # Determine component directory
+    comp_dir = Path(f"components/{component}")
+    if not comp_dir.exists():
+        return {
+            "component": component,
+            "compliant": False,
+            "error": f"Component directory not found: {comp_dir}"
+        }
+    
+    # Check licenses
+    license_results = check_all_licenses(str(comp_dir), allowed_licenses)
+    
+    # Determine compliance
+    compliant = True
+    violations = []
+    
+    for pm, pm_results in license_results.items():
+        if "error" in pm_results:
+            continue
+        if "violations" in pm_results and pm_results["violations"]:
+            compliant = False
+            violations.extend(pm_results["violations"])
+    
+    return {
+        "component": component,
+        "compliant": compliant,
+        "package_managers": license_results,
+        "violations": violations
+    }
+
+

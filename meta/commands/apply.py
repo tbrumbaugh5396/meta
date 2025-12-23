@@ -4,7 +4,7 @@ import typer
 from pathlib import Path
 from typing import Optional
 from meta.utils.logger import log, success, error, table, panel
-from meta.utils.manifest import get_components, get_environment_config
+from meta.utils.manifest import get_components, get_environment_config, find_meta_repo_root
 from meta.utils.git import clone_repo, checkout_version, pull_latest, get_commit_sha
 from meta.utils.bazel import run_bazel_build, run_bazel_test
 from meta.utils.lock import get_locked_components
@@ -14,6 +14,7 @@ from meta.utils.dependencies import get_dependency_order
 from meta.utils.progress import ProgressBar
 from meta.utils.config import get_config
 from meta.utils.error_recovery import ErrorRecoveryContext, execute_with_recovery
+from meta.utils.vendor import is_vendored_mode, get_vendor_info
 from meta.commands.plan import compute_changes
 import concurrent.futures
 from typing import List, Tuple
@@ -24,7 +25,90 @@ app = typer.Typer(help="Apply changes to meta-repo")
 def apply_component(name: str, comp: dict, env: str, manifests_dir: str = "manifests", 
                     use_lock: bool = False, lock_file: str = "manifests/components.lock.yaml",
                     skip_packages: bool = False, isolate: bool = False) -> bool:
-    """Apply changes for a single component."""
+    """Apply changes for a single component.
+    
+    Routes to vendored or reference mode based on manifest configuration.
+    """
+    # Check if vendored mode
+    if is_vendored_mode(manifests_dir):
+        return apply_vendored_component(name, comp, env, manifests_dir, skip_packages, isolate)
+    else:
+        return apply_reference_component(name, comp, env, manifests_dir, use_lock, lock_file, skip_packages, isolate)
+
+
+def apply_vendored_component(
+    name: str,
+    comp: dict,
+    env: str,
+    manifests_dir: str = "manifests",
+    skip_packages: bool = False,
+    isolate: bool = False
+) -> bool:
+    """Apply vendored component (source already in meta-repo)."""
+    log(f"Applying vendored component: {name}")
+    
+    root = find_meta_repo_root()
+    if not root:
+        error("Could not find meta-repo root")
+        return False
+    
+    comp_dir = root / "components" / name
+    
+    if not comp_dir.exists():
+        error(f"Component {name} not vendored. Run: meta vendor import {name}")
+        return False
+    
+    vendor_info = get_vendor_info(comp_dir)
+    if not vendor_info:
+        error(f"Component {name} exists but is not properly vendored")
+        return False
+    
+    version = vendor_info.get("version", "unknown")
+    log(f"Using vendored {name}@{version}")
+    
+    comp_type = comp.get("type", "unknown")
+    build_target = comp.get("build_target", "")
+    
+    # Set up isolation if requested
+    venv_path = None
+    if isolate:
+        from meta.utils.isolation import setup_component_isolation
+        isolation_config = comp.get("isolation", {})
+        if isolation_config:
+            venv_path = setup_component_isolation(name, comp_dir, isolation_config)
+    
+    # Install package manager dependencies (in venv if isolated)
+    if not install_component_dependencies(str(comp_dir), skip_packages, venv_path=venv_path):
+        error(f"Failed to install dependencies for {name}")
+        return False
+    
+    # Build/test if Bazel component
+    if comp_type == "bazel" and build_target:
+        log(f"Building Bazel target: {build_target}")
+        if not run_bazel_build(build_target, str(comp_dir)):
+            error(f"Failed to build {name}")
+            return False
+        
+        log(f"Testing Bazel target: {build_target}")
+        if not run_bazel_test(build_target, str(comp_dir)):
+            error(f"Failed to test {name}")
+            return False
+    
+    success(f"Successfully applied changes for {name}")
+    return True
+
+
+def apply_reference_component(
+    name: str,
+    comp: dict,
+    env: str,
+    manifests_dir: str = "manifests",
+    use_lock: bool = False,
+    lock_file: str = "manifests/components.lock.yaml",
+    skip_packages: bool = False,
+    isolate: bool = False
+) -> bool:
+    """Apply reference component (current implementation - git repos)."""
     log(f"Applying changes for component: {name}")
     
     comp_type = comp.get("type", "unknown")

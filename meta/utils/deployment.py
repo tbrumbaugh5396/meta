@@ -31,6 +31,16 @@ class DeploymentManager:
         manifests_dir: str = "manifests"
     ) -> bool:
         """Deploy component with specified strategy."""
+        # Handle string strategy (for backward compatibility)
+        if isinstance(strategy, str):
+            strategy_map = {
+                "immediate": DeploymentStrategy.IMMEDIATE,
+                "blue-green": DeploymentStrategy.BLUE_GREEN,
+                "canary": DeploymentStrategy.CANARY,
+                "rolling": DeploymentStrategy.ROLLING
+            }
+            strategy = strategy_map.get(strategy.lower(), DeploymentStrategy.IMMEDIATE)
+        
         log(f"Deploying {component} version {version} using {strategy.value} strategy")
         
         if strategy == DeploymentStrategy.IMMEDIATE:

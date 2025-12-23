@@ -5,12 +5,73 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
 from meta.utils.logger import log, error, success
-from meta.utils.manifest import get_components
+from meta.utils.manifest import get_components, find_meta_repo_root
 from meta.utils.git import get_commit_sha, get_commit_sha_for_ref, git_available
+from meta.utils.vendor import is_vendored_mode, get_vendor_info
 
 
 def generate_lock_file(manifests_dir: str = "manifests", lock_file: str = "manifests/components.lock.yaml") -> bool:
-    """Generate a lock file with exact commit SHAs for all components."""
+    """Generate a lock file for all components.
+    
+    In vendored mode: stores semantic versions only (no commit SHAs)
+    In reference mode: stores commit SHAs for reproducibility
+    """
+    if is_vendored_mode(manifests_dir):
+        return generate_vendored_lock_file(manifests_dir, lock_file)
+    else:
+        return generate_reference_lock_file(manifests_dir, lock_file)
+
+
+def generate_vendored_lock_file(manifests_dir: str, lock_file: str) -> bool:
+    """Generate lock file for vendored mode (versions only, no commit SHAs)."""
+    log("Generating lock file for vendored mode...")
+    components = get_components(manifests_dir)
+    root = find_meta_repo_root()
+    
+    if not root:
+        error("Could not find meta-repo root")
+        return False
+    
+    locked_components = {}
+    
+    for name, comp in components.items():
+        comp_dir = root / "components" / name
+        vendor_info = get_vendor_info(comp_dir) if comp_dir.exists() else None
+        
+        if not vendor_info:
+            error(f"Component {name} not vendored. Run: meta vendor import {name}")
+            continue
+        
+        locked_components[name] = {
+            "version": vendor_info.get("version"),  # Semantic version only
+            "repo": comp.get("repo", ""),
+            "type": comp.get("type", "unknown"),
+            "build_target": comp.get("build_target"),
+            "depends_on": comp.get("depends_on", []),
+            "vendored_at": vendor_info.get("vendored_at"),
+        }
+        
+        log(f"  {name}: {vendor_info.get('version')}")
+    
+    # Write lock file
+    lock_data = {
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "mode": "vendored",
+        "components": locked_components
+    }
+    
+    lock_path = Path(lock_file)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(lock_path, 'w') as f:
+        yaml.dump(lock_data, f, default_flow_style=False, sort_keys=False)
+    
+    success(f"Lock file generated: {lock_file}")
+    return True
+
+
+def generate_reference_lock_file(manifests_dir: str, lock_file: str) -> bool:
+    """Generate lock file for reference mode (commit SHAs for reproducibility)."""
     if not git_available():
         error("Git is not available - cannot generate lock file")
         return False
@@ -64,6 +125,7 @@ def generate_lock_file(manifests_dir: str = "manifests", lock_file: str = "manif
     # Write lock file
     lock_data = {
         "generated_at": datetime.utcnow().isoformat() + "Z",
+        "mode": "reference",
         "components": locked_components
     }
     

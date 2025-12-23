@@ -191,3 +191,11 @@ def run_in_venv(venv_path: Path, command: List[str], cwd: Optional[Path] = None)
         error(f"Command failed in venv: {e}")
         return False
 
+
+def setup_venv(component_name: str, component_dir: Path, python_version: Optional[str] = None) -> Optional[Path]:
+    """Set up a virtual environment for a component (alias for create_venv)."""
+    venv_path = get_component_venv_path(component_name)
+    if create_venv(venv_path, python_version):
+        return venv_path
+    return None
+

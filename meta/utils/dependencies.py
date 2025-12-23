@@ -86,22 +86,31 @@ def validate_dependencies(manifests_dir: str = "manifests") -> Tuple[bool, List[
 
 
 def get_dependency_order(components: Dict[str, Any]) -> List[str]:
-    """Get components in dependency order (topological sort)."""
-    # Build dependency graph
+    """Get components in dependency order (topological sort).
+    
+    Returns components in order such that dependencies come before dependents.
+    For example, if A depends on B, B will come before A in the result.
+    """
+    # Build dependency graph: graph[component] = list of components it depends on
     graph = {}
     in_degree = {}
     
+    # Initialize all components
     for name in components.keys():
         graph[name] = get_component_dependencies(name, components)
         in_degree[name] = 0
     
     # Calculate in-degrees
+    # In-degree = number of components that this component depends on
+    # Actually, for topological sort where dependencies come first,
+    # we want: if A depends on B, process B before A
+    # So we need: in_degree[A] = number of dependencies A has
+    # Start with components that have no dependencies (in-degree 0)
     for name, deps in graph.items():
-        for dep in deps:
-            if dep in in_degree:
-                in_degree[dep] = in_degree.get(dep, 0) + 1
+        in_degree[name] = len(deps)
     
     # Topological sort using Kahn's algorithm
+    # Start with nodes that have no dependencies (in-degree == 0)
     queue = [name for name, degree in in_degree.items() if degree == 0]
     result = []
     
@@ -109,11 +118,12 @@ def get_dependency_order(components: Dict[str, Any]) -> List[str]:
         node = queue.pop(0)
         result.append(node)
         
-        for dep in graph[node]:
-            if dep in in_degree:
-                in_degree[dep] -= 1
-                if in_degree[dep] == 0:
-                    queue.append(dep)
+        # For each component that depends on 'node', decrease its in-degree
+        for comp_name, comp_deps in graph.items():
+            if node in comp_deps:
+                in_degree[comp_name] -= 1
+                if in_degree[comp_name] == 0:
+                    queue.append(comp_name)
     
     # Check for cycles (if result doesn't include all nodes)
     if len(result) != len(components):
@@ -123,4 +133,24 @@ def get_dependency_order(components: Dict[str, Any]) -> List[str]:
         result.extend(remaining)
     
     return result
+
+
+def detect_conflicts(components: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Detect dependency conflicts between components."""
+    conflicts = []
+    
+    # Check for version conflicts
+    # In a real implementation, this would check if different components
+    # require incompatible versions of the same dependency
+    
+    # For now, return empty list (no conflicts detected)
+    return conflicts
+
+
+def get_dependency_graph(components: Dict[str, Any]) -> Dict[str, List[str]]:
+    """Get dependency graph as a dictionary."""
+    graph = {}
+    for name in components.keys():
+        graph[name] = get_component_dependencies(name, components)
+    return graph
 

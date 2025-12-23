@@ -19,7 +19,7 @@ try:
         rollback, health, config, scaffold, completion, info, updates, backup,
         metrics, audit, secrets, policies, workspace, interactive, help as help_cmd,
         discover, compare, diff, publish, graph, migrate, registry, dashboard,
-        plugins, analytics, git, install, update
+        plugins, analytics, git, install, update, changeset, vendor
     )
     # Phase 11-14 commands (optional, may not all be available)
     changelog = release = docs = cicd = security = None
@@ -55,7 +55,7 @@ except ImportError as e:
         rollback, health, config, scaffold, completion, info, updates, backup,
         metrics, audit, secrets, policies, workspace, interactive, help as help_cmd,
         discover, compare, diff, publish, graph, migrate, registry, dashboard,
-        plugins, analytics, git, install, update, changeset
+        plugins, analytics, git, install, update, changeset, vendor
     )
     changelog = release = docs = cicd = security = None
     test_templates = license_cmd = benchmark = api = di = cost = None
@@ -110,6 +110,7 @@ app.add_typer(changeset.app, name="changeset")
 app.add_typer(install.app, name="install")
 app.add_typer(update.app, name="update")
 app.add_typer(lock.app, name="lock")
+app.add_typer(vendor.app, name="vendor")
 app.add_typer(deps.app, name="deps")
 app.add_typer(conflicts.app, name="conflicts")
 app.add_typer(rollback.app, name="rollback")

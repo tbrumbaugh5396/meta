@@ -82,11 +82,19 @@ This flexibility is why meta-repo + tooling is a superset of monorepo capabiliti
 
 This implementation provides a complete meta-repo solution with:
 
-- **Changeset system**: Atomic cross-repo operations via changesets (see [Changeset System](./CHANGESET_SYSTEM.md))
+- **Dual modes**: Reference mode (orchestration) and Vendored mode (Linus-safe materialization)
+- **Changeset system**: Atomic cross-repo operations via changesets (see [Changeset System](./docs/CHANGESET_SYSTEM.md))
 - **Comprehensive tooling**: CLI that provides monorepo-like ergonomics while preserving architectural boundaries
 - **Integration testing**: System-level validation ensures all components work together
 - **Environment management**: Dev, staging, and production configurations with version pinning
 - **CI/CD integration**: Local testing of GitHub Actions workflows with `act`
+
+#### Reference Mode vs Vendored Mode
+
+The system supports two modes:
+
+- **Reference Mode** (default): Components are git repositories. Provides flexibility and live updates, but requires external dependencies.
+- **Vendored Mode**: Components are copied into meta-repo as source code. Provides Linus-safe self-contained commits, true atomicity, and no external dependencies. See [Vendored Mode](./docs/VENDORED_MODE.md) for details.
 
 [↑ Back to Table of Contents](#table-of-contents)
 
@@ -97,7 +105,7 @@ This implementation provides a complete meta-repo solution with:
    - Atomic rollback across all repos in a changeset
    - Bisect to find which changeset introduced a bug
    - Full audit trail of cross-repo changes
-   - See [Changeset System](./CHANGESET_SYSTEM.md) for details
+   - See [Changeset System](./docs/CHANGESET_SYSTEM.md) for details
 
 ### 2. **Unified Git Operations**
    - Execute git commands across all repositories
@@ -105,50 +113,50 @@ This implementation provides a complete meta-repo solution with:
    - Changeset integration for atomic commits
    - Parallel execution (planned)
 
-### 3. **Dependency Graph Visualization**
+### 4. **Dependency Graph Visualization**
    - Multiple output formats (text, DOT, Mermaid)
    - Recursive traversal with depth control
    - Component promotion candidate analysis
    - Export to PDF/PNG/SVG
    - Full meta-repo dependency graphs
 
-### 4. **Repository Management**
+### 5. **Repository Management**
    - Batch updates (add, commit, push)
    - Status tracking across all repos
    - Selective updates (meta-repos only, components only)
    - Changeset-aware commits
 
-### 5. **Package Management**
+### 6. **Package Management**
    - System-wide package installation
    - Python package management
    - Declarative manifests
    - Environment-specific dependencies
 
-### 6. **Isolation & Reproducibility**
+### 7. **Isolation & Reproducibility**
    - Virtual environment support
    - Docker containerization
    - Component-specific dependencies
    - Lock files for exact version pinning
 
-### 7. **CI/CD Integration**
+### 8. **CI/CD Integration**
    - Local testing of GitHub Actions with `act`
    - Workflow and job testing
    - Environment-specific test runs
    - See [CI/CD Testing](#cicd-testing) section
 
-### 8. **Environment Management**
+### 9. **Environment Management**
    - Multiple environments (dev, staging, prod)
    - Environment-specific component versions
    - Lock files per environment
    - Environment promotion workflows
 
-### 9. **Validation & Testing**
+### 10. **Validation & Testing**
    - System-level validation
    - Dependency conflict detection
    - Component health checks
    - Integration test orchestration
 
-### 10. **Advanced Features**
+### 11. **Advanced Features**
    - Component discovery and search
    - Dependency analysis and visualization
    - Rollback and recovery
@@ -717,7 +725,65 @@ meta git commit -m "Message" --changeset <changeset-id> [--component COMPONENT]
 meta lock --changeset <changeset-id>
 ```
 
-See [Changeset System](./CHANGESET_SYSTEM.md) for complete documentation.
+See [Changeset System](./docs/CHANGESET_SYSTEM.md) for complete documentation.
+
+### Vendor Operations (Linus-Safe Mode)
+
+#### `meta vendor`
+Vendor components into meta-repo for Linus-safe materialization.
+
+**Enable Vendored Mode:**
+```yaml
+# manifests/components.yaml
+meta:
+  mode: "vendored"  # Enable vendored mode
+
+components:
+  agent-core:
+    repo: "git@github.com:org/agent-core.git"
+    version: "v1.2.3"
+```
+
+**Commands:**
+```bash
+# Import a single component
+meta vendor import <component-name>
+
+# Import all components
+meta vendor import-all
+
+# Force re-import (updates to new version)
+meta vendor import-all --force
+
+# Check vendor status
+meta vendor status
+```
+
+**Workflow:**
+```bash
+# 1. Enable vendored mode in components.yaml
+# 2. Import components
+meta vendor import-all
+
+# 3. Review and commit
+git add components/
+git commit -m "Vendor all components"
+
+# 4. Build and test
+meta apply --all
+```
+
+See [Vendored Mode](./docs/VENDORED_MODE.md) for complete documentation.
+
+**Conversion Commands:**
+```bash
+# Convert between modes
+meta vendor convert vendored    # Convert to vendored mode
+meta vendor convert reference   # Convert to reference mode
+
+# Production release workflow
+meta vendor release --env prod --version v1.0.0
+```
 
 ### Repository Updates
 
@@ -1624,9 +1690,9 @@ meta monitor --component agent-core
 
 ## Next Steps
 
-1. Review the [Getting Started Guide](./GETTING_STARTED.md)
-2. Check the [Component Inventory](./COMPONENT_INVENTORY.md)
-3. Read the [Architecture Overview](./ARCHITECTURE.md)
-4. Use the [Quick Reference](./QUICK_REFERENCE.md) for commands
+1. Review the [Getting Started Guide](./docs/GETTING_STARTED.md)
+2. Check the [Component Inventory](./docs/COMPONENT_INVENTORY.md)
+3. Read the [Architecture Overview](./docs/ARCHITECTURE.md)
+4. Use the [Quick Reference](./docs/QUICK_REFERENCE.md) for commands
 
 [↑ Back to Table of Contents](#table-of-contents)

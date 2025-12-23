@@ -11,7 +11,10 @@ def generate_dot_graph(components: Optional[Dict[str, Any]] = None,
     if components is None:
         components = get_components(manifests_dir)
     
-    deps = resolve_transitive_dependencies(components)
+    # Build dependency graph directly from components
+    deps = {}
+    for comp_name in components.keys():
+        deps[comp_name] = components[comp_name].get("depends_on", [])
     
     lines = ["digraph dependencies {"]
     lines.append("  rankdir=LR;")
@@ -37,7 +40,10 @@ def generate_mermaid_graph(components: Optional[Dict[str, Any]] = None,
     if components is None:
         components = get_components(manifests_dir)
     
-    deps = resolve_transitive_dependencies(components)
+    # Build dependency graph directly from components
+    deps = {}
+    for comp_name in components.keys():
+        deps[comp_name] = components[comp_name].get("depends_on", [])
     
     lines = ["graph TD"]
     
@@ -61,7 +67,10 @@ def generate_text_tree(component: str,
     if component not in components:
         return f"Component {component} not found"
     
-    deps = resolve_transitive_dependencies(components)
+    # Build dependency map directly from components
+    deps_map = {}
+    for comp_name, comp_data in components.items():
+        deps_map[comp_name] = comp_data.get("depends_on", [])
     
     def build_tree(comp: str, depth: int = 0, visited: Set[str] = None) -> List[str]:
         if visited is None:
@@ -76,7 +85,7 @@ def generate_text_tree(component: str,
         prefix = "  " * depth + ("└── " if depth > 0 else "")
         lines.append(f"{prefix}{comp}")
         
-        component_deps = sorted(deps.get(comp, set()))
+        component_deps = sorted(deps_map.get(comp, []))
         for i, dep in enumerate(component_deps):
             is_last = i == len(component_deps) - 1
             sub_prefix = "  " * (depth + 1) + ("└── " if is_last else "├── ")

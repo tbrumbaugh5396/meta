@@ -113,3 +113,55 @@ def get_policy_engine() -> PolicyEngine:
     """Get policy engine instance."""
     return PolicyEngine()
 
+
+def check_policies(
+    component: str,
+    manifests_dir: str = "manifests"
+) -> Dict[str, Any]:
+    """Check policies for a component."""
+    from meta.utils.manifest import get_components
+    
+    components = get_components(manifests_dir)
+    if component not in components:
+        return {
+            "component": component,
+            "compliant": False,
+            "error": f"Component {component} not found",
+            "violations": []
+        }
+    
+    comp_info = components[component]
+    version = comp_info.get("version", "unknown")
+    depends_on = comp_info.get("depends_on", [])
+    
+    # Get policy engine
+    engine = get_policy_engine()
+    
+    # Check all policies
+    violations = []
+    compliant = True
+    
+    # Check version policy
+    version_ok, version_error = engine.check_version_policy(component, version)
+    if not version_ok:
+        compliant = False
+        violations.append(version_error)
+    
+    # Check dependency policy
+    dep_ok, dep_error = engine.check_dependency_policy(component, depends_on)
+    if not dep_ok:
+        compliant = False
+        violations.append(dep_error)
+    
+    # Check security policy
+    sec_ok, sec_error = engine.check_security_policy(component)
+    if not sec_ok:
+        compliant = False
+        violations.append(sec_error)
+    
+    return {
+        "component": component,
+        "compliant": compliant,
+        "violations": violations
+    }
+

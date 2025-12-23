@@ -150,6 +150,13 @@ class TestDependencyResolution:
         
         # component-c should come before component-b
         # component-b should come before component-a
+        # Note: topological sort may vary, but dependencies should be respected
+        assert "component-c" in order
+        assert "component-b" in order
+        assert "component-a" in order
+        # Verify dependency order: component-c has no deps, component-b depends on c, 
+        # component-a depends on b. So order should be: c, b, a (or any valid topological order)
+        # The key constraint: if A depends on B, B must come before A
         assert order.index("component-c") < order.index("component-b")
         assert order.index("component-b") < order.index("component-a")
     

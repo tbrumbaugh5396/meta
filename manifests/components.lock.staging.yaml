@@ -1,0 +1,8 @@
+components:
+  test-component:
+    sha: abc123def456
+    version: v1.0.0
+    environment: staging
+environment: staging
+promoted_from: dev
+promoted_at: '2025-12-22T10:17:43.244563Z'

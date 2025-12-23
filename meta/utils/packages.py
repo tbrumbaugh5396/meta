@@ -176,7 +176,7 @@ def install_go_dependencies(component_dir: str) -> bool:
         return False
 
 
-def install_component_dependencies(component_dir: str, skip_packages: bool = False) -> bool:
+def install_component_dependencies(component_dir: str, skip_packages: bool = False, venv_path: Optional[str] = None) -> bool:
     """Install all detected package manager dependencies for a component."""
     if skip_packages:
         return True
