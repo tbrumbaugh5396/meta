@@ -25,7 +25,8 @@ class TestSecretDetection:
     def test_scan_file_for_secrets_finds_api_key(self, temp_meta_repo):
         """Test scanning file with API key."""
         test_file = temp_meta_repo["components"] / "config.py"
-        test_file.write_text('api_key = "sk_live_1234567890abcdefghijklmnop"')
+        # Use obviously fake test value that won't trigger GitHub's secret scanner
+        test_file.write_text('api_key = "test_fake_api_key_for_testing_only_1234567890abcdef"')
         
         secrets = scan_file_for_secrets(test_file)
         assert len(secrets) > 0
@@ -90,7 +91,8 @@ class TestSecretDetection:
         """Test detecting secrets in component with secrets."""
         comp_dir = temp_meta_repo["components"] / "test-component"
         comp_dir.mkdir()
-        (comp_dir / "config.py").write_text('api_key = "sk_live_1234567890abcdefghijklmnop"')
+        # Use obviously fake test value that won't trigger GitHub's secret scanner
+        (comp_dir / "config.py").write_text('api_key = "test_fake_api_key_for_testing_only_1234567890abcdef"')
         
         is_safe, results = detect_secrets_in_component(comp_dir, fail_on_secrets=False)
         
@@ -101,10 +103,10 @@ class TestSecretDetection:
         """Test failing when secrets detected."""
         comp_dir = temp_meta_repo["components"] / "test-component"
         comp_dir.mkdir()
-        (comp_dir / "config.py").write_text('api_key = "sk_live_1234567890abcdefghijklmnop"')
+        # Use obviously fake test value that won't trigger GitHub's secret scanner
+        (comp_dir / "config.py").write_text('api_key = "test_fake_api_key_for_testing_only_1234567890abcdef"')
         
         is_safe, results = detect_secrets_in_component(comp_dir, fail_on_secrets=True)
         
         assert is_safe is False
         assert results['total_secrets'] > 0
-
