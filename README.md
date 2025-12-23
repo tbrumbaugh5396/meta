@@ -1755,11 +1755,47 @@ meta monitor --component agent-core
 
 [↑ Back to Table of Contents](#table-of-contents)
 
+## Documentation
+
+The meta-repo CLI documentation is organized by functional systems:
+
+### Core Systems
+
+- **[Lock Files and Reproducibility](./docs/LOCK_FILES_AND_REPRODUCIBILITY.md)** - Lock files, multi-environment locks, promotion, and comparison
+- **[Dependency Management](./docs/DEPENDENCY_MANAGEMENT.md)** - Dependency validation, conflict resolution, and visualization
+- **[Package Management](./docs/PACKAGE_MANAGEMENT.md)** - Package manager support, security scanning, and license checking
+- **[Caching and Storage](./docs/CACHING_AND_STORAGE.md)** - Local/remote cache, content-addressed storage, and garbage collection
+- **[Rollback and Recovery](./docs/ROLLBACK_AND_RECOVERY.md)** - Rollback commands, snapshots, and recovery workflows
+- **[Health and Monitoring](./docs/HEALTH_AND_MONITORING.md)** - Health checks and monitoring capabilities
+
+### Operations and Workflows
+
+- **[Component Operations](./docs/COMPONENT_OPERATIONS.md)** - Apply, validate, plan, and status commands
+- **[Vendored Mode](./docs/VENDORED_MODE.md)** - Linus-safe materialization mode with conversion capabilities
+- **[Changeset System](./docs/CHANGESET_SYSTEM.md)** - Atomic cross-repo operations
+- **[Configuration Management](./docs/CONFIGURATION_MANAGEMENT.md)** - Project and global configuration
+- **[CI/CD Integration](./docs/CI_CD_GUIDE.md)** - CI/CD integration examples and workflows
+
+### Developer Experience
+
+- **[Developer Experience](./docs/DEVELOPER_EXPERIENCE.md)** - Scaffolding, auto-completion, component info, and debugging
+- **[Isolation and System Packages](./docs/ISOLATION_AND_SYSTEM_PACKAGES.md)** - Component isolation and system package management
+- **[Testing](./docs/TESTING.md)** - Testing guide and test infrastructure
+
+### Reference
+
+- **[Architecture](./docs/ARCHITECTURE.md)** - System architecture and component structure
+- **[Getting Started](./docs/GETTING_STARTED.md)** - Quick start guide
+- **[Commands](./docs/COMMANDS.md)** - Complete command reference
+- **[Quick Reference](./docs/QUICK_REFERENCE.md)** - Quick command reference
+
+[↑ Back to Table of Contents](#table-of-contents)
+
 ## Next Steps
 
 1. Review the [Getting Started Guide](./docs/GETTING_STARTED.md)
-2. Check the [Component Inventory](./docs/COMPONENT_INVENTORY.md)
-3. Read the [Architecture Overview](./docs/ARCHITECTURE.md)
+2. Read the [Architecture Overview](./docs/ARCHITECTURE.md)
+3. Explore [Component Operations](./docs/COMPONENT_OPERATIONS.md) for daily workflows
 4. Use the [Quick Reference](./docs/QUICK_REFERENCE.md) for commands
 
 [↑ Back to Table of Contents](#table-of-contents)

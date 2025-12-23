@@ -342,33 +342,265 @@ To migrate from reference mode to vendored mode:
 
 ## Enhanced Features
 
-The vendor system includes comprehensive safety and reliability features:
+The vendor system includes comprehensive safety, reliability, and developer experience features:
 
 ### Safety Features
-- **Pre-conversion validation** - Validates prerequisites before conversion
-- **Secret detection** - Scans for API keys, passwords, tokens before vendoring
-- **Automatic backup** - Creates backup before conversion
-- **Atomic transactions** - All-or-nothing conversion with automatic rollback
+
+#### Pre-Conversion Validation
+- Validates prerequisites (Git, manifests, structure)
+- Checks component configurations
+- Validates dependencies
+- Detects circular dependencies
+- Checks for secrets (optional)
+
+**Usage:**
+```bash
+# Automatic validation before conversion
+meta vendor convert vendored
+```
+
+#### Secret Detection
+- Scans for API keys, passwords, tokens
+- Detects private keys
+- Configurable patterns
+- Respects exclusions
+
+**Usage:**
+```bash
+# Check secrets (warns but continues)
+meta vendor convert vendored --check-secrets
+
+# Fail if secrets detected
+meta vendor convert vendored --fail-on-secrets
+```
+
+#### Automatic Backup
+- Creates backup before conversion
+- Manual backup/restore commands
+- Backup listing
+- Component inclusion/exclusion
+
+**Usage:**
+```bash
+# Automatic backup (default)
+meta vendor convert vendored --backup
+
+# Manual backup
+meta vendor backup --name my-backup
+
+# Restore from backup
+meta vendor restore my-backup
+
+# List backups
+meta vendor list-backups
+```
+
+#### Atomic Transactions
+- All-or-nothing conversion
+- Automatic rollback on failure
+- Checkpoint management
+- Transaction logging
+
+**Usage:**
+```bash
+# Atomic conversion (default)
+meta vendor convert vendored --atomic
+
+# Non-atomic (allows partial conversion)
+meta vendor convert vendored --no-atomic
+```
 
 ### Reliability Features
-- **Network resilience** - Automatic retry with exponential backoff
-- **Continue-on-error** - Continue converting other components if one fails
-- **Conversion resume** - Resume from checkpoint after interruption
-- **Dependency-aware ordering** - Converts in correct dependency order
+
+#### Network Resilience
+- Automatic retry with exponential backoff
+- Handles transient network failures
+- Configurable retry limits
+- Git operations with retry
+
+**Automatic**: Enabled by default
+
+#### Continue-on-Error Mode
+- Continue converting other components if one fails
+- Partial success instead of total failure
+- Useful for large meta-repos
+
+**Usage:**
+```bash
+meta vendor convert vendored --continue-on-error
+```
+
+#### Conversion Resume
+- Resume from checkpoint after failure
+- Skip already-converted components
+- Retry failed components
+- Progress tracking
+
+**Usage:**
+```bash
+# Resume from latest checkpoint
+meta vendor resume
+
+# Resume from specific checkpoint
+meta vendor resume --checkpoint checkpoint_20240115_120000
+
+# List checkpoints
+meta vendor list-checkpoints
+```
+
+#### Dependency-Aware Ordering
+- Converts components in dependency order
+- Uses topological sort
+- Dependencies converted before dependents
+
+**Automatic**: Enabled by default
 
 ### Developer Experience
-- **Dry-run mode** - Preview changes without making them
-- **File filtering** - Respects .gitignore patterns
-- **Conversion verification** - Verifies conversion success
-- **Changeset integration** - Tracks conversions in changesets
 
-See [Vendor Enhancements](./VENDOR_ENHANCEMENTS.md) for complete documentation of all features.
+#### Dry-Run Mode
+- Preview changes without making them
+- Identify potential issues
+- Plan conversion order
+
+**Usage:**
+```bash
+meta vendor convert vendored --dry-run
+```
+
+#### File Filtering (.gitignore Support)
+- Respects `.gitignore` patterns during vendor
+- Excludes build artifacts
+- Reduces vendored size
+- Cleaner vendored code
+
+**Usage:**
+```bash
+# Respect .gitignore (default)
+meta vendor convert vendored --respect-gitignore
+
+# Include all files
+meta vendor convert vendored --no-respect-gitignore
+```
+
+#### Conversion Verification
+- Verifies conversion succeeded
+- Checks file integrity
+- Validates vendored state
+- Reports component status
+
+**Usage:**
+```bash
+# Automatic verification (default)
+meta vendor convert vendored --verify
+
+# Manual verification
+meta vendor verify
+```
+
+#### Changeset Integration
+- Tracks conversions in changesets
+- Atomic authorship across repos
+- Audit trail
+- Links conversion to logical changes
+
+**Usage:**
+```bash
+# Associate with changeset
+meta vendor convert vendored --changeset abc12345
+```
+
+#### Semantic Version Validation
+- Validates semantic version formats
+- Ensures production-ready versions
+- Rejects "latest" in production
+- Validates version compatibility
+
+**Automatic**: Enabled in validation
+
+## Enhanced Conversion Commands
+
+### Complete Example Workflow
+
+```bash
+# 1. Preview conversion (dry-run)
+meta vendor convert vendored --dry-run
+
+# 2. Validate everything is ready
+meta vendor convert vendored --dry-run  # Includes validation
+
+# 3. Convert with all safety features
+meta vendor convert vendored \
+  --backup \
+  --atomic \
+  --check-secrets \
+  --verify \
+  --changeset abc12345
+
+# 4. If conversion fails, resume
+meta vendor resume
+
+# 5. Verify conversion
+meta vendor verify
+
+# 6. If needed, restore from backup
+meta vendor restore backup_20240115_120000
+```
+
+### New Commands
+
+#### `meta vendor verify`
+Verify that a conversion was successful.
+
+```bash
+meta vendor verify
+meta vendor verify --check-integrity
+```
+
+#### `meta vendor backup`
+Create a manual backup.
+
+```bash
+meta vendor backup
+meta vendor backup --name my-backup
+meta vendor backup --no-include-components
+```
+
+#### `meta vendor restore <name>`
+Restore from a backup.
+
+```bash
+meta vendor restore backup_20240115_120000
+meta vendor restore my-backup --no-restore-components
+```
+
+#### `meta vendor list-backups`
+List all available backups.
+
+```bash
+meta vendor list-backups
+```
+
+#### `meta vendor resume`
+Resume a conversion from a checkpoint.
+
+```bash
+meta vendor resume
+meta vendor resume --checkpoint checkpoint_20240115_120000
+meta vendor resume --no-retry-failed
+```
+
+#### `meta vendor list-checkpoints`
+List all available conversion checkpoints.
+
+```bash
+meta vendor list-checkpoints
+```
 
 ## See Also
 
-- [Vendor Enhancements](./VENDOR_ENHANCEMENTS.md) - Complete feature documentation
+- [Lock Files and Reproducibility](./LOCK_FILES_AND_REPRODUCIBILITY.md) - Reproducible builds
 - [Changeset System](./CHANGESET_SYSTEM.md) - Atomic cross-repo operations
-- [Lock Files](./PHASE1_ENHANCEMENTS.md#1-lock-files) - Reproducible builds
+- [Component Operations](./COMPONENT_OPERATIONS.md) - Apply and validate commands
 - [README.md](../README.md) - Complete documentation
 
 [↑ Back to Table of Contents](../README.md#table-of-contents)
